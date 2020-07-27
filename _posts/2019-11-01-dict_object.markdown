@@ -11,6 +11,7 @@ tags:
     - dict
 ---
 借鉴于《Python源码剖析 陈儒》、[flaggo/python3-source-code-analysis](https://github.com/flaggo/python3-source-code-analysis/blob/master/objects/dict-object/index.md)、[python/cpython](https://github.com/python/cpython/blob/v3.7.0/Objects/listobject.c)v3.70
+
 `Dict`是一种提供关联关系的可变容器，在python中由于`PyDictObject`对象本身在python的实现时被大量使用，需要极其苛刻的搜索效率，因此使用负载因子为2/3的`hash table`来实现`dict`（**开放定址法**解决冲突），而在c++中则是基于红黑树。
 
 ### PyDictObject

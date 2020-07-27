@@ -11,6 +11,7 @@ tags:
     - function
 ---
 借鉴于《Python源码剖析 陈儒》、[python/cpython](https://github.com/python/cpython/blob/v3.7.0/Include/funcobject.h) v3.70
+
 函数是组织好的，可重复使用的，用来实现单一，或相关联功能的代码段，函数机制使得我们能够实现功能分解，代码复用等目标。
 
 ### PyFunctionObject与PyCodeObject
