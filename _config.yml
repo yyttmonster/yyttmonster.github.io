@@ -47,7 +47,7 @@ kramdown:
 
 
 # Disqus settings
-#disqus_username: _your_disqus_short_name_
+disqus_username: yyttmonster
 
 # Duoshuo settings
 # duoshuo_username: huxblog
@@ -61,7 +61,7 @@ kramdown:
 # Baidu Analytics
 ba_track_id: 8df1bed41e5ab2af4adfdbc30e1a9d64
 # Google Analytics
-ga_track_id: 'UA-49627206-1'            # Format: UA-xxxxxx-xx
+ga_track_id: 'UA-173849637-1'            # Format: UA-xxxxxx-xx
 ga_domain: yyttmonster.cn
 
 
