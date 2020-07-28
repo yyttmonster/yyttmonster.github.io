@@ -4,7 +4,7 @@ title:      "Function Object"
 subtitle:   " \"\""
 date:       2019-11-17 15:21:32
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
     - python
     - object
@@ -14,7 +14,8 @@ tags:
 
 函数是组织好的，可重复使用的，用来实现单一，或相关联功能的代码段，函数机制使得我们能够实现功能分解，代码复用等目标。
 
-### PyFunctionObject与PyCodeObject
+## PyFunctionObject与PyCodeObject
+
 ```c
 // Include/funcobject.h
 typedef struct {
@@ -89,7 +90,8 @@ typedef struct {
 
 这里需要注意的是函数的`PyCodeObject`是在编译时就创建的，但`PyFunctionObject`是在程序执行到`def`语句时才创建的，此时其内部的`func_code`指针才指向`PyCodeObject`。
 
-### 函数调用
+## 函数调用
+
 ```c
 // Python/ceval.c  4532-4603
 Py_LOCAL_INLINE(PyObject *) _Py_HOT_FUNCTION

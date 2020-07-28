@@ -4,7 +4,7 @@ title:      "Dict Object"
 subtitle:   " \"Hashmap\""
 date:       2019-11-01 09:18:33
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
     - python
     - object
@@ -14,7 +14,8 @@ tags:
 
 `Dict`是一种提供关联关系的可变容器，在python中由于`PyDictObject`对象本身在python的实现时被大量使用，需要极其苛刻的搜索效率，因此使用负载因子为2/3的`hash table`来实现`dict`（**开放定址法**解决冲突），而在c++中则是基于红黑树。
 
-### PyDictObject
+## PyDictObject
+
 ```c
 // Include/dictobject.h
 typedef struct _dictkeysobject PyDictKeysObject;
@@ -43,7 +44,8 @@ typedef struct {
 2. 分离字典 - split table dictionary
    split table主要用于保存object的`__dict__`属性，字典的`keys`存储于`type`之中，这使得同一个类的所有实例能够共享`keys`。因为同一个类可能会创建出多个对象，这些对象的属性是确定的，让同一个类的所有对象共享一份属性字典的`keys`（因为各属性`str`的映射得到的下标是固定的，只是存储的值不同），`value`则保存于各个对象中，节省了空间。当字典的键出现歧义时，各个字典将惰性的转为combined table，这保证在一般情况下良好的内存使用。在分离字典中，`ma_values != NULL, dk_refcnt >= 1`，值存储于`ma_values`中，并且`keys`只能是字符串（unicode）。
 
-### PyDictKeysObject
+## PyDictKeysObject
+
 ```c
 // Objects/dict-common.h
 typedef ssize_t Py_ssize_t;  
@@ -113,7 +115,8 @@ struct _dictkeysobject {
 ![avator](/img/dict_object_1.png)
 从 cpython3.6 开始，**对 dict 中的键值做了两重映射**，`PyDictKeysObject` 中储存哈希表的实际类型变成了 `char dk_indices[]`，另外用 `PyDictKeyEntry` 数组储存数据。**`dk_indices `里面储存的值不是真实数据` PyDictKeyEntry`，而是它在 `PyDictKeyEntry` 数组里面的位置**。也就是说，**现在键的哈希值对应`dk_indices`的下标索引（第一重映射），而该索引下的数组元素中存储了当前键对应数据在`PyDictKeyEntry` 数组中的位置索引（第二重映射）**。因此查询时，我们先根据哈希值找到`dk_indices`中存储的位置，然后根据这个值找到`PyDictKeyEntry`数组中存储的值。每插入一个值时，实际是按顺序将值插入 `PyDictKeyEntry*` 数组中，然后将这个值的位置储存在哈希表 `dk_indices `里，遍历 dict，遍历的不是哈希表 `dk_indices`，而是这个 `PyDictKeyEntry*`，而 `PyDictKeyEntry*` 中的数据是有序的，因此**dict就保持了插入顺序**。
 
-### 对象缓冲池
+## 对象缓冲池
+
 ```c
 #ifndef PyDict_MAXFREELIST
 #define PyDict_MAXFREELIST 80

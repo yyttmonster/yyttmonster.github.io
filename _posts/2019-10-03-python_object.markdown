@@ -4,7 +4,7 @@ title:      "Python Object"
 subtitle:   " \"Everything is an object.\""
 date:       2019-10-03 16:10:26
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
     - python
     - object
@@ -19,7 +19,7 @@ python中一切都是对象，整数、字符串以及函数、类型都是对�
 2. 对象只能通过特定的宏或者函数才能存取（they must be accessed through special macros and functions only）
 
 对象一旦被分配，那么他的大小以及地址就会固定，不会改变，当对象需要包含一个大小可变的数据时，只需要包含指向对象的可变部分的指针。并不是所有具有相同类型的对象都有一样的大小。
-### PyObject及PyVarObject
+## PyObject及PyVarObject
 
 Python 的对象机制是基于**PyObject**这个结构体展开的拓展开来的。
 ```c
@@ -44,7 +44,8 @@ typedef struct {
 ```
 python对象中还分为定长对象和变长对象两种，由源码可知变长对象实际上只是增加了一个用于存储元素个数的变量 ob_size（是元素个数而不是字节数），所有的变长对象都会含有以上的PyVarObject对象。
 
-### 类型对象
+## 类型对象
+
 **PyObject** 的 对象类型指针`struct _typeobject *ob_type`，它指向的类型对象就决定了一个对象是什么类型的。它不仅仅决定了一个对象的类型，还包含大量的`元信息`， 例如创建对象需要分配多少内存，对象都支持哪些操作等等。
 ```c
 // Include/object.h
@@ -82,7 +83,8 @@ typedef struct _typeobject {
 
 } PyTypeObject;
 ```
-### 类型的类型
+## 类型的类型
+
 对于普通的对象，它的类型由`struct _typeobject *ob_type;`这个指针指向的类型对象确定，那么类型对象的类型又如何确定？实际上是由`PyType_Type`决定的，它包含一个指向自己的指针。
 ```c
 // Objects/typeobject.c
@@ -157,7 +159,8 @@ print(id(type(type(b))))
 
 正是由于`PyObject`和`PyTypeObject`，python实现了对象的多态性。创建整数对象时，python内部使用`PyObject*`这样一个泛型指针，而不是一个`PyIntObject*`变量来保存并维护这个对象，指针所指对象的类型并不知道，只是从该对象的`ob_type`动态判断，调用对象函数时，也就会动态调用`ob_type`中定义的对应的操作。
 
-### type对象和class对象
+## type对象和class对象
+
 刚谈到所有类的类型都是同一个——`type`，`type`即是类，又是自己的实例对象，称作`metaclass`，`type`和最开始提到的基类`object`又存在一定的关系，`type`是`object`的子类，`object`却又是`type`的一个实例化对象，关系如下图：
 ![avator](/img/python_object_3.jpg)
 其中，虚线表示`is-instance-of`即类与实例关系，实线表示`is-kind-of`即基类与子类间的关系。可以看出，所有的类都是`type`的实例。

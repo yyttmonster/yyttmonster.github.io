@@ -4,14 +4,13 @@ title:      "我就是那片叶子啊"
 subtitle:   " \"悟空传\""
 date:       2018-10-21 18:16:00
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
-    - negative
     - life
 
 ---
 
-### 我就是那片叶子啊
+## 我就是那片叶子啊
 
  “我一闭上眼睛，世界上就只有我自己，所以我就会害怕，一睁眼，看见那么多的自己，就很安心了。”
 

@@ -4,7 +4,7 @@ title:      "String Object"
 subtitle:   " \"\""
 date:       2019-10-15 08:34:28
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
     - python
     - object
@@ -13,7 +13,8 @@ tags:
 借鉴于《Python源码剖析 陈儒》及[python/cpython]([https://github.com/python/cpython/blob/v3.7.0/Objects/unicodeobject.c](https://github.com/python/cpython/blob/v3.7.0/Objects/unicodeobject.c) v3.70
 
 string 是一个常见的数据类型，它与`bytes`对象密切相关。python3中使用`text`和`binary data`来替代unicode字符串和普通字符串，分别对应`str(PyUnicodeObject)`和`bytes(PyBytesObject)`，程序中以`''`或`""`定义的字符串对应的都是`str`，要定义`bytes`必须以`b''`的形式。`str`可以通过`encode()`转为`bytes`，而`bytes`也可以通过`decode`转为`str`。
-### 字符编码
+## 字符编码
+
 借鉴于[字符编码笔记：ASCII，Unicode 和 UTF-8 阮一峰](http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html)
 
 ASCII (American Standard Code for Information Interchange: 美国信息交换标准代码）仅规定了一个字节上二进制与字符的对应关系，即128个字符的编码。但是世界上语言字符很多，需要一种独一无二的能包含所有字符的编码，Unicode应运而生，但作为一个字符集，Unicode未规定存储方式，因此无法区分unicode与ascll码，无法知道是一位Unicode码还是多位ascall码，导致了多种存储方式，并且英文字母最常用且一个字节即可，若统一大小，将会产生大量的冗余。
@@ -31,9 +32,10 @@ ASCII (American Standard Code for Information Interchange: 美国信息交换标
 | 0001 0000 - 0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx |
 例如:unicode  4E25(100111000100101)  -- utf-8   E4B8A5(11100100 10111000 10100101)
 
-### Binary Data 
+## Binary Data 
 
-#### PyBytesObject
+### PyBytesObject
+
 ```c
 // include/bytesobject.h  13-42
 #ifdef COUNT_ALLOCS
@@ -67,7 +69,8 @@ b'\x00'   # ‘\0’是一个“空字符”常量，它的ASCII码值为0
 ```
 与C中一样，内部维护的字符串必须以`'\0'`结尾，但其实际长度是由`ob_size`维护，因此字符串中间是可以出现`'\0'`的，内存中实际长度为`ob_size+1`，满足`ob_sval[ob_size] == '\0'`。`ob_shash`用于缓存该对象的`hash`值，避免每次都重新计算该字符串对象的`hash`值，初始值为-1，该值可用于`intern`机制（虽然`intern`机制只针对`PyUnicodeObject`）。
 
-#### bytes字符串的创建
+### bytes字符串的创建
+
 创建字符串对象有两种方式，`PyBytes_FromString`和`PyBytes_FromStringAndSize`。
 ```python
 // Objects/bytesobject.c 135-178
@@ -128,8 +131,10 @@ PyObject * PyBytes_FromStringAndSize(const char *str, Py_ssize_t size)
 ```
 传给`PyString_FromString`的参数必须是一个指向以`\0`结尾的字符串的指针（the parameter 'str' points to a null-terminated string containing exactly 'size' bytes.），`PyString_FromString`通过传入的`size`参数就知道需要拷贝的字符长度，因而参数不需要一定是以`\0`结尾的字符数组的指针（the parameter 'str' is either NULL or else points to a string containing at least 'size' bytes）。创建时，会判断长度，并使用对象共享。
 
-### Text
-#### PyUnicodeObject
+## Text
+
+### PyUnicodeObject
+
 ```c
 // Include/cpython/unicodeobject.h
 typedef struct {
@@ -284,12 +289,14 @@ Unicode字符串共四种形式:
 
 若字符串最大字符在创建时没有给定，它就是`legacy `对象，使用`PyUnicodeObject`结构体，结构体与字符所在内存块不连续，`wstr`中仅是一个指针，当`PyUnicode_READY`被调用时，数据指针才被分配空间。
 
-### 共享对象与INTERN机制
+## 共享对象与INTERN机制
+
 借鉴于[Python Objects](https://medium.com/@bdov_/https-medium-com-bdov-python-this-is-an-object-that-is-an-object-everything-is-an-object-fff50429cd4b) part1 - 4
 
 程序中难免会存在许多相同值的对象实例，例如整数等，如果为相同的值都重新分配空间，那是很浪费的，并且频繁的进行空间申请与释放操作，既耗时又会产生大量内存碎片，因此python使用共享对象或`str`的intern机制来进行优化。其思想都是将对象保存至内存，当再次创建对象时，若已存在相同值的对象，则返回该对象的指针，而不必分配空间，再创建一个实例。
 
-#### 可变对象与不可变对象
+### 可变对象与不可变对象
+
 在python中，如果对象是`immutable`的（等效于unchangeable），会在内存中存储一个实例，这个实例的值与它的`id`是对应的（值改变，那么id也随之改变），在创建一个`immutable`对象时，首先会检查内存中是否已经存在这样一个实例，若存在，直接返回该实例的指针，而对于`mutable`对象，每次都会直接实例化一个新的对象。
 ![avator](/img/string_object_1.png)
 
@@ -351,11 +358,13 @@ d =  [1, 2, 3, 4, ['a', 'b']]
 
 ![avator](/img/string_object_2.png)
 
-#### 共享对象
+### 共享对象
+
 共享机制实际上就是存在一个大小固定的缓冲池，将共享对象放入缓冲池中。
 实际程序中，对于每一个`immutable`对象实例，我们难道都需要将其保存在内存中，等待下一次实例化时，返回引用吗？显然是不实际的。因此，对于每一类对象，其实都是存在一定限制的，在满足相应限制条件时，才会使用共享机制。
 1） int
 实际编程中，数值较小的数，可能会被频繁使用，刚好`int`又是`immutable`的，因此我们可以共享这些数值，而不必频繁的申请空间创建实例。
+
 ```c
 \\ Objects/longobject.c
 #ifndef NSMALLPOSINTS
@@ -453,7 +462,8 @@ PyObject * PyBytes_FromString(const char *str)
     }
 }
 ```
-#### intern机制
+### intern机制
+
 **字符串中的`intern`机制本质上相当于共享对象，它只用于`PyUnicodeObject`**，字符串创建后可以通过`intern`机制在内存中保存该对象，以后再次使用只需要返回一个指针。
 ```c
 //Objects/unicodeobject.c

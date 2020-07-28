@@ -4,7 +4,7 @@ title:      "AVL tree or RB tree or Hash?"
 subtitle:   " \"\""
 date:       2020-05-23 09:07:01
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
     - python
     - AVL
@@ -13,7 +13,8 @@ tags:
 ---
 `c++ std::map`是由红黑树实现的，对于`Hashmap`则有另外的`std::unordered_map`，在`python`中`dict`则是由`hashmap`经由两层映射实现的，那么为什么`python`中没有使用红黑树呢？两者各自存在何种优势？
 
-### 红黑树 or AVL 树
+## 红黑树 or AVL 树
+
 红黑树是一颗平衡二叉搜索树，它在每个结点上使用一个标志位来表示结点颜色，通过约束任何一条从根到叶子结点路径上各结点颜色来实现树的平衡（也可以通过边的颜色，例如左偏红黑树，它更易实现）。树中每个结点定义如下：
 ```python
 class RBNode:
@@ -38,7 +39,8 @@ class TreeNode(object):
 所以红黑树相对于AVL树来说，牺牲了部分平衡性以换取插入/删除操作时少量的旋转操作，整体来说效能要优于AVL树。同时，红黑树作为最常见的可持久化数据结构，需要保证可以高效的回滚到操作之前，此时红黑树一般情况下仅需保存`O(1)`步平衡维护操作，而AVL则是需要`O(logn)`步^[1]。当然，在查询操作远大于更新操作时，AVL 也未尝不是一个更佳的选择。
 [^1] [AVL Trees vs. Red-Black Trees?](https://discuss.fogcreek.com/joelonsoftware/default.asp?cmd=show&ixPost=22948)
 
-### 红黑树 or Hash
+## 红黑树 or Hash
+
 Hash即散列算法是一种压缩映射，它将任意长度的消息压缩成某一固定长度的消息摘要。Python中是将`hashable`对象（实现了`__hash__`函数）映射输出一个整数。相同输入哈希值相同，当不同输入得到相同的哈希值时，即是发生了碰撞，碰撞可以通过常见的开放定址法、拉链法解决，也可以使用再哈希法或公共溢出区法。
 ```python
 a = '1234abcd'  

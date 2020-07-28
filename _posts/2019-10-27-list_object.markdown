@@ -4,7 +4,7 @@ title:      "List Object"
 subtitle:   " \"\""
 date:       2019-10-27 16:35:20
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
     - python
     - object
@@ -14,7 +14,8 @@ tags:
 
 `list`是python中的一类基础数据结构，它有效的支持元素的插入、添加、删除等操作，并且在python中，`list`的元素可以是任何类型的数据，因为它存储的都是`PyObject*`指针。
 
-### PyListObject
+## PyListObject
+
 ```c
 typedef struct {
     // Include/listobject.h
@@ -36,7 +37,9 @@ typedef struct {
 } PyListObject;
 ```
 从定义中可以看出，`PyListObject`是一个变长对象，同时也是一个可变对象。在变长对象`PyObject_VAR_HEAD`中存在一个维护大小的变量`ob_size`，列表对象中又存在`allocated`变量，也是一个大小值，两者哪一个才是表示列表元素多少呢？不难想象，对于一个列表，频繁的插入、删除操作无法避免，此时如果每次插入/删除一个元素都需要申请/释放空间，一者浪费时间，二者list需要的是连续空间，因此python内存管理策略与c++一样，创建列表时，我们就会申请一片连续空间，这片空间大小就由`allocated`管理，而列表实际元素个数则有`ob_size`维护，即有`0 <= ob_size <= allocated`，当空间不足时，则会重新申请更大的一片连续空间，在空间过大，即`ob_size < allocated/2`时，会收缩内存空间大小（空间重分配在`list_resize()`中）。
-### 列表的创建与对象缓冲池
+
+## 列表的创建与对象缓冲池
+
 ```c
 ///Objects/listobject.c
 PyObject * PyList_New(Py_ssize_t size){

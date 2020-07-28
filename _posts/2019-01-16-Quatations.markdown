@@ -4,7 +4,7 @@ title:      "Quotation"
 subtitle:   " \"反思\""
 date:       2018-10-21 18:16:00
 author:     "yyttmonster"
-header-img: "img/post-bg-2015.jpg"
+header-img: "img/post-bg.jpg"
 tags:
     - Quotation
 
