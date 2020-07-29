@@ -17,6 +17,7 @@ tags:
 ## PyFunctionObject与PyCodeObject
 
 ```c
+
 // Include/funcobject.h
 typedef struct {
     PyObject_HEAD
@@ -44,8 +45,10 @@ typedef struct {
     * (func_closure may be NULL if PyCode_GetNumFree(func_code) == 0).
     */
 } PyFunctionObject;
+
 ```
 **`PyFunctionObject`是python代码在**运行时动态产生**的，在执行一个`def`语句时创建。**`func_code`中存储了函数的静态信息（即可从源码中直接看到的信息，例如对于一个数值赋值表达式，变量名与常量值的联系就是一种静态信息），实际上，它指向与函数代码相对应的`PyCodeObject`对象。`PyFunctionObject`还包含了函数在执行时所需的动态信息，这些信息无法存储于`PyCodeObject`对象中。`func_globals`是函数的`global`命名空间，由上一层的`PyFrameObject`传递而来，例如函数可以使用函数所在模块的全局变量便是这个变量在发挥作用。
+
 ```c
 typedef struct {
     PyObject_HEAD
