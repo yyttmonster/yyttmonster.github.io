@@ -100,7 +100,7 @@ https://github.com/kitian616/jekyll-TeXt-theme
           }
         }
       }
-
+      
       for (i = 0; i < sectionArticles.length; i++) {
         result[i] && $sections.eq(i).removeClass('d-none');
         result[i] || $sections.eq(i).addClass('d-none');
