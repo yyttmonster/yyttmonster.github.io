@@ -7,7 +7,7 @@ author:     "yyttmonster"
 header-img: "img/post-bg.jpg"
 tags:
     - closure
-    - pyhton
+    - python
     - JavaScript
     - decorator
     - AOP
