@@ -8,7 +8,7 @@ header-img: "img/post-bg.jpg"
 tags:
     - python
     - AVL
-    - RB tree
+    - RB_Tree
     - dict
 ---
 `c++ std::map`是由红黑树实现的，对于`Hashmap`则有另外的`std::unordered_map`，在`python`中`dict`则是由`hashmap`经由两层映射实现的，那么为什么`python`中没有使用红黑树呢？两者各自存在何种优势？
