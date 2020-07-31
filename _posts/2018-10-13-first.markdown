@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "思想的丧失"
-subtitle:   " \"所思所想\""
+subtitle:   " \"为往圣继绝学，为万世开太平?\""
 date:       2018-10-13 14:33:31
 author:     "yyttmonster"
 header-img: "img/post-bg.jpg"

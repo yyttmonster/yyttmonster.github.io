@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "List Object"
-subtitle:   " \"\""
+subtitle:   " \"Lists are mutable sequences, typically used to store collections of homogeneous items (where the precise degree of similarity will vary by application).\""
 date:       2019-10-27 16:35:20
 author:     "yyttmonster"
 header-img: "img/post-bg.jpg"

@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "String Object"
-subtitle:   " \"\""
+subtitle:   " \"Strings are immutable sequences of Unicode code points.\""
 date:       2019-10-15 08:34:28
 author:     "yyttmonster"
 header-img: "img/post-bg.jpg"

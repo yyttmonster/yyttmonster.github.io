@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "closure"
-subtitle:   " \"闭包\""
+subtitle:   " \"A Closure is a function object that remembers values in enclosing scopes even if they are not present in memory.\""
 date:       2019-03-25 09:45:29
 author:     "yyttmonster"
 header-img: "img/post-bg.jpg"

@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "Function Object"
-subtitle:   " \"\""
+subtitle:   " \"Function objects are created by function definitions. The only operation on a function object is to call it: func(argument-list).\""
 date:       2019-11-17 15:21:32
 author:     "yyttmonster"
 header-img: "img/post-bg.jpg"
@@ -17,7 +17,6 @@ tags:
 ## PyFunctionObject与PyCodeObject
 
 ```c
-
 // Include/funcobject.h
 typedef struct {
     PyObject_HEAD
