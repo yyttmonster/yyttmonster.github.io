@@ -1,9 +1,9 @@
-# HuxBlog Boilerplate
+## yyttmonster Blog
 
-##### This is the boilerplate of [Hux Blog](https://github.com/Huxpro/huxpro.github.io), all documents is over there!
+1. [Install NodeJS Ruby RubyGems python jekyll](http://jekyllcn.com/docs/installation/) in your computer.
+2. [Using Jekyll with Bundler](https://jekyllrb.com/tutorials/using-jekyll-with-bundler/) (maybe you should download the theme file into the directory before run `bundle add jekyll`;).
+3. Add a `markdown` file to your `_posts` directory.
+4. Just using 'git'.
 
-#### [View Boilerplate &rarr;](http://huangxuan.me/huxblog-boilerplate/)
+[1] The blog theme is [Hux Boilerplate](http://huangxuan.me/huxblog-boilerplate/).
 
-#### [View Live Hux Blog &rarr;](http://huangxuan.me)
-
-## If you like Hux Blog, Please star [huxpro.github.io repo](https://github.com/Huxpro/huxpro.github.io) instead of this! Thank you!
