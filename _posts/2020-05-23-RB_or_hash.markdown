@@ -56,15 +56,14 @@ print(a.__hash__())
 
 此外，python进行对象比较时，结果相同所需的唯一特征属性是其具有相同的哈希值；建议的做法是把参与比较的对象全部组件的哈希值混在一起，即将它们打包为一个元组并对该元组做哈希运算。
 
+|        |     Hash Table     |   Red-Black Tree    |
+| :----: | :----------------: | :-----------------: |
+| Space  |    O(n) : O(n)     |     O(n) : O(n)     |
+| Insert |    O(1) : O(n)     | O(log n) : O(log n) |
+| Fetch  |    O(1) : O(n)     | O(log n) : O(log n) |
+| Delete |    O(1) : O(n)     | O(log n) : O(log n) |
+|        | （average: worst） | （average : worst） |
 
-
-|        | Hash Table  |   Red-Black Tree    |
-| :----: | :---------: | :-----------------: |
-| Space  | O(n) : O(n) |   O(n)     : O(n)   |
-| Insert | O(1) : O(n) | O(log n) : O(log n) |
-| Fetch  | O(1) : O(n) | O(log n) : O(log n) |
-| Delete | O(1) : O(n) | O(log n) : O(log n) |
-|        | avg : worst |   average : worst   |
 红黑树可以保证即便在最坏情况下依旧能够保持`O(logn)`的时间复杂度，其稳定性高于 Hash方式，并且它不存在哈希冲突，而为了保证`O(1)`的复杂度，一个好的哈希需要保证其负载，因此这会导致存在空间浪费，以及当负载大于负载因子（一般为3/4，2的幂移位操作）时，需要扩容，全部重新进行映射。但一般情况下，Hash的时间复杂度远优于红黑树。
 
 最后需要注意的是，红黑树作为二叉搜索树，它本身保证了元素的有序，python3.6+也通过两级映射实现了“有序”，不过指的是元素插入顺序而非大小顺序。
