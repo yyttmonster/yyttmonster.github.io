@@ -14,9 +14,7 @@ tags:
 
 如果一条注释位于 Python 脚本的**第一或第二行**，并且匹配正则表达式 `coding[=:]\s*([-\w.]+)`，这条注释会被作为编码声明来处理，如果它是在第二行，则第一行也必须是注释。若没有编码声明，`python2`默认编码为`ASCII`，`python3`默认编码为UTF-8。`encoding-name`可参考[Codec registry and base classes](https://docs.python.org/3/library/codecs.html)。
 
-```c
-# -*- coding: <encoding-name> -*-
-```
+`# -*- coding: <encoding-name> -*-`
 
 该编码声明代表的是**当前源码文件**的编码格式，Python词法分析将读取的程序文本转换为Unicode码点时会解析编码声明，若`encoding-name`非法则会引发`SyntaxError: encoding problem`。
 
