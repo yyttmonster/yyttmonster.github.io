@@ -1,4 +1,5 @@
-# Site settings
+# Site setting
+plugins: [jekyll-paginate]
 title: yyttmonster
 SEOTitle: yyttmonster | Blog
 header-img: img/home-bg.jpg

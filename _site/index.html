@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>yyttmonster | Blog</title>
+
+    <link rel="canonical" href="http://localhost:4000/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <!-- <link rel="stylesheet" href="/css/syntax.css"> -->
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+    <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+        
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">yyttmonster</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div id="huxblog_navbar">
+                <div class="navbar-collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="/">Home</a>
+                        </li>
+                        
+                        
+                        
+                        
+                        <li>
+                            <a href="/about/">About</a>
+                        </li>
+                        
+                        
+                        
+                        <li>
+                            <a href="/archive/">Archive</a>
+                        </li>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </ul>
+                </div>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+        // Use customize navbar with high-quality material design animation
+        // in high-perf jank-free CSS3 implementation
+        var $body = document.body;
+        var $toggle = document.querySelector('.navbar-toggle');
+        var $navbar = document.querySelector('#huxblog_navbar');
+        var $collapse = document.querySelector('.navbar-collapse');
+
+        var __HuxNav__ = {
+            
+            close: function () {
+                $navbar.className = " ";
+                // wait until animation end.
+                setTimeout(function () {
+                    // prevent frequently toggle
+                    if ($navbar.className.indexOf('in') < 0) {
+                        $collapse.style.height = "0px"
+                    }
+                }, 400)
+            },
+            open: function () {
+                $collapse.style.height = "auto"
+                $navbar.className += " in";
+            }
+        }
+
+        // Bind Event
+        $toggle.addEventListener('click', function (e) {
+            if ($navbar.className.indexOf('in') > 0) {
+                __HuxNav__.close()
+            } else {
+                __HuxNav__.open()
+            }
+        })
+
+        /**
+         * Since Fastclick is used to delegate 'touchstart' globally
+         * to hack 300ms delay in iOS by performing a fake 'click',
+         * Using 'e.stopPropagation' to stop 'touchstart' event from 
+         * $toggle/$collapse will break global delegation.
+         * 
+         * Instead, we use a 'e.target' filter to prevent handler
+         * added to document close HuxNav.  
+         *
+         * Also, we use 'click' instead of 'touchstart' as compromise
+         */
+        document.addEventListener('click', function (e) {
+            if (e.target == $toggle) return;
+            if (e.target.className == 'icon-bar') return;
+            __HuxNav__.close();
+        })
+    </script>
+
+
+    <!-- Page Header -->
+
+
+
+
+
+
+
+<header class="intro-header" style="background-image: url('/img/home-bg.jpg')">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        
+        <div class="site-heading">
+        
+          <h1>yyttmonster</h1>
+          <span class="subheading">悲伤逆流成河</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+<!-- Main Content -->
+<div class="container">
+	<div class="row">
+        
+
+<!-- USE SIDEBAR -->
+    <!-- Post Container -->
+    		<div class="
+                col-lg-8 col-lg-offset-1
+                col-md-8 col-md-offset-1
+                col-sm-12
+                col-xs-12
+                post-container
+            ">
+    			
+<div class="post-preview">
+    <a href="/2024/08/25/new_start/">
+        <h2 class="post-title">
+            新开始
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "做点自己的事情."
+        </h3>
+        
+        <div class="post-content-preview">
+            尝试重拾我的blog。
+
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on August 25, 2024
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2021/01/01/conclusion/">
+        <h2 class="post-title">
+            往事随风
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "记忆之中留下的只有美好."
+        </h3>
+        
+        <div class="post-content-preview">
+            对于未来的日子，总是伴随着三分期冀、三分忧虑、三分迷茫以及一分喜悦，期冀着完成诸多事，忧虑着未知的苦难，迷茫着做些什么，等到实际经历的时候，却发现一切依旧和往常那些日子一样平常，只是在很久后才惊觉，好像在那些平凡日子中的某天，某个抉择已经改变了往后的路。
+
+研究生的研究呢
+
+研究生开始于为红绿蓝项目的语义分割，清晰地记得那时与老师亲切的交流，表示别人都做好了，为什么还要重复造轮子，这不是有悖...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on January 1, 2021
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2020/08/09/Statements/">
+        <h2 class="post-title">
+            Some Statements
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "Details."
+        </h3>
+        
+        <div class="post-content-preview">
+            Encoding declarations
+
+如果一条注释位于 Python 脚本的第一或第二行，并且匹配正则表达式 coding[=:]\s*([-\w.]+)，这条注释会被作为编码声明来处理，如果它是在第二行，则第一行也必须是注释。若没有编码声明，python2默认编码为ASCII，python3默认编码为UTF-8。encoding-name可参考Codec registry and ...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on August 9, 2020
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2020/05/23/RB_or_hash/">
+        <h2 class="post-title">
+            AVL tree or RB tree or Hash?
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "No Silver Bullet"
+        </h3>
+        
+        <div class="post-content-preview">
+            c++ std::map是由红黑树实现的，对于Hashmap则有另外的std::unordered_map，在python中dict则是由hashmap经由两层映射实现的，那么为什么python中没有使用红黑树呢？两者各自存在何种优势？
+
+红黑树 or AVL 树
+
+红黑树是一颗平衡二叉搜索树，它在每个结点上使用一个标志位来表示结点颜色，通过约束任何一条从根到叶子结点路径上各结点颜色来实现树...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on May 23, 2020
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/11/17/function_object/">
+        <h2 class="post-title">
+            Function Object
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "Function objects are created by function definitions. The only operation on a function object is to call it: func(argument-list)."
+        </h3>
+        
+        <div class="post-content-preview">
+            借鉴于《Python源码剖析 陈儒》、python/cpython v3.70
+
+函数是组织好的，可重复使用的，用来实现单一，或相关联功能的代码段，函数机制使得我们能够实现功能分解，代码复用等目标。
+
+PyFunctionObject与PyCodeObject
+
+// Include/funcobject.h
+typedef struct {
+    PyObject_HEAD
+    //...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on November 17, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/11/01/dict_object/">
+        <h2 class="post-title">
+            Dict Object
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "A mapping object maps hashable values to arbitrary objects."
+        </h3>
+        
+        <div class="post-content-preview">
+            借鉴于《Python源码剖析 陈儒》、flaggo/python3-source-code-analysis、python/cpythonv3.70
+
+Dict是一种提供关联关系的可变容器，在python中由于PyDictObject对象本身在python的实现时被大量使用，需要极其苛刻的搜索效率，因此使用负载因子为2/3的hash table来实现dict（开放定址法解决冲突），而在c++...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on November 1, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/10/28/list_object/">
+        <h2 class="post-title">
+            List Object
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "Lists are mutable sequences, typically used to store collections of homogeneous items (where the precise degree of similarity will vary by application)."
+        </h3>
+        
+        <div class="post-content-preview">
+            借鉴于《Python源码剖析 陈儒》及python/cpythonv3.70
+
+list是python中的一类基础数据结构，它有效的支持元素的插入、添加、删除等操作，并且在python中，list的元素可以是任何类型的数据，因为它存储的都是PyObject*指针。
+
+PyListObject
+
+typedef struct {
+    // Include/listobject.h
+    ...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on October 28, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/10/27/resentment/">
+        <h2 class="post-title">
+            恚
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "忿而不怒."
+        </h3>
+        
+        <div class="post-content-preview">
+            都是第一次做人，在这片我自己的天地里，没人有资格在我心情低落时，还要求我不要自怨自艾，要正能量，除了我自己，的确，情绪的压抑都是自己给自己的，与他人无关。各种大道理响彻耳边，但在此刻的前提假设下，全是胡扯。
+
+学业
+
+有时自认为永不后悔，觉得哪怕重来，在已有人生经历、知识背景等条件下所做出的选择依旧是不会改变的，但此刻我依旧心存悔意。过去多年来，遇到的老师都是对我人生轨迹产生好的影响的，或者...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on October 27, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/10/15/string_object/">
+        <h2 class="post-title">
+            String Object
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "Strings are immutable sequences of Unicode code points."
+        </h3>
+        
+        <div class="post-content-preview">
+            借鉴于《Python源码剖析 陈儒》及[python/cpython](https://github.com/python/cpython/blob/v3.7.0/Objects/unicodeobject.c v3.70
+
+string 是一个常见的数据类型，它与bytes对象密切相关。python3中使用text和binary data来替代unicode字符串和普通字符串，分别对应st...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on October 15, 2019
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/10/04/python_object/">
+        <h2 class="post-title">
+            Python Object
+        </h2>
+        
+        <h3 class="post-subtitle">
+             "Everything is an object."
+        </h3>
+        
+        <div class="post-content-preview">
+            借鉴于《Python源码剖析 陈儒》及python/cpython v3.70
+
+python中一切都是对象，整数、字符串以及函数、类型都是对象。（对象是数据以及基于这些数据的操作的集合；对象是堆中分配的结构 - Objects are structures allocated on the heap）因此它们都可以赋值给一个变量，可以当作参数传递给一函数，可以作为一个函数的返回值，还可以作...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by yyttmonster on October 4, 2019
+    </p>
+</div>
+<hr>
+
+
+<!-- Pager -->
+
+<ul class="pager">
+    
+    
+    <li class="next">
+        <a href="/page2">Older Posts &rarr;</a>
+    </li>
+    
+</ul>
+
+
+    		</div>
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-3 col-lg-offset-0
+                col-md-3 col-md-offset-0
+                col-sm-12
+                col-xs-12
+                sidebar-container
+            ">
+                <!-- Featured Tags -->
+                
+
+
+<section>
+    
+    <h5><a href="/archive/">FEATURED TAGS</a></h5>
+    <div class="tags">
+        
+        
+        
+        
+        
+        
+                <a data-sort="0010" 
+                    href="/archive/?tag=life"
+                    title="life"
+                    rel="6">life</a>
+        
+                <a data-sort="0007" 
+                    href="/archive/?tag=python"
+                    title="python"
+                    rel="9">python</a>
+        
+                <a data-sort="0011" 
+                    href="/archive/?tag=object"
+                    title="object"
+                    rel="5">object</a>
+        
+                <a data-sort="0014" 
+                    href="/archive/?tag=conclusion"
+                    title="conclusion"
+                    rel="2">conclusion</a>
+        
+                <a data-sort="0014" 
+                    href="/archive/?tag=dict"
+                    title="dict"
+                    rel="2">dict</a>
+    </div>
+</section>
+
+
+                <!-- Short About -->
+                <section class="visible-md visible-lg">
+                    <hr><h5><a href="/about/">ABOUT ME</a></h5>
+                    <div class="short-about">
+                        
+                            <img src="/img/avatar.png" />
+                        
+                        
+                            <p>You are more than what you have become.</p>
+                        
+                        <!-- SNS Link -->
+                        <ul class="list-inline">
+                            
+                            
+                            <li>
+                                <a href="https://twitter.com/yyttmonster">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                            
+                            <li>
+                                <a target="_blank" href="https://www.zhihu.com/people/yyttmonster">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa  fa-stack-1x fa-inverse">知</i>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                            
+                            
+                            <li>
+                                <a target="_blank" href="https://www.facebook.com/yyttmonster">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                            
+                            <li>
+                                <a target="_blank" href="https://github.com/yyttmonster">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-circle fa-stack-2x"></i>
+                                        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                    </span>
+                                </a>
+                            </li>
+                            
+                        </ul>
+                    </div>
+                </section>
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://linkinpark213.com/">linkinpark213</a></li>
+                    
+                        <li><a href="https://hahahawu.com/">hahahawu</a></li>
+                    
+                        <li><a href="http://huangxuan.me">Hux Blog</a></li>
+                    
+                </ul>
+                
+                <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=300 height=86 src="//music.163.com/outchain/player?type=2&id=34916301&auto=1&height=66"></iframe>
+    		</div>
+        
+	</div>
+</div>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+                    <li>
+                        <a href="https://twitter.com/yyttmonster">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/yyttmonster">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+
+
+                    
+                    <li>
+                        <a target="_blank" href="https://www.facebook.com/yyttmonster">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/yyttmonster">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; yyttmonster 2024
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function () {
+        var $nav = document.querySelector("nav");
+        if ($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-173849637-1';
+    var _gaDomain = 'yyttmonster.cn';
+
+    // Originial
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '8df1bed41e5ab2af4adfdbc30e1a9d64';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function () {
+        var hm = document.createElement("script");
+        hm.src = "//hm.baidu.com/hm.js?" + _baId;
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog(selector) {
+
+        // interop with multilangual 
+        if ('' == 'true') {
+            _containerSelector = 'div.post-container.active'
+        } else {
+            _containerSelector = 'div.post-container'
+        }
+
+        // init
+        var P = $(_containerSelector), a, n, t, l, i, c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+
+        // clean
+        $(selector).html('')
+
+        // appending
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#" + $(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+            l = $('<li class="' + n + '_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function (e) {
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+
+
+<!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0" /> -->
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

@@ -1,0 +1,135 @@
+<h2 id="encoding-declarations">Encoding declarations</h2>
+
+<p>如果一条注释位于 Python 脚本的<strong>第一或第二行</strong>，并且匹配正则表达式 <code class="language-plaintext highlighter-rouge">coding[=:]\s*([-\w.]+)</code>，这条注释会被作为编码声明来处理，如果它是在第二行，则第一行也必须是注释。若没有编码声明，<code class="language-plaintext highlighter-rouge">python2</code>默认编码为<code class="language-plaintext highlighter-rouge">ASCII</code>，<code class="language-plaintext highlighter-rouge">python3</code>默认编码为UTF-8。<code class="language-plaintext highlighter-rouge">encoding-name</code>可参考<a href="https://docs.python.org/3/library/codecs.html">Codec registry and base classes</a>。</p>
+
+<p><code class="language-plaintext highlighter-rouge"># -*- coding: &lt;encoding-name&gt; -*-</code></p>
+
+<p>该编码声明代表的是<strong>当前源码文件</strong>的编码格式，Python词法分析将读取的程序文本转换为Unicode码点时会解析编码声明，若<code class="language-plaintext highlighter-rouge">encoding-name</code>非法则会引发<code class="language-plaintext highlighter-rouge">SyntaxError: encoding problem</code>。</p>
+
+<h2 id="global-and-nonlocal-statements">global and nonlocal statements</h2>
+
+<p>借鉴于<a href="https://docs.python.org/zh-cn/3/reference/simple_stmts.html">python语言参考</a>、<a href="https://www.programiz.com/python-programming/global-local-nonlocal-variables">Python Global, Local and Nonlocal variables</a></p>
+
+<p><code class="language-plaintext highlighter-rouge">global</code>语句用于将列出的标识符解读为全局变量，它使得我们可以在一个局部<code class="language-plaintext highlighter-rouge">scope</code>去修改一个全局变量，否则我们在该<code class="language-plaintext highlighter-rouge">scope</code>可能仅能读取到该变量值而不能做修改。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">def</span> <span class="nf">func</span><span class="p">():</span>
+    <span class="nf">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+<span class="nf">func</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="mi">1</span>
+
+
+<span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">def</span> <span class="nf">func</span><span class="p">():</span>
+    <span class="n">a</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="nf">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+<span class="nf">func</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">UnboundLocalError</span><span class="p">:</span> <span class="n">local</span> <span class="n">variable</span> <span class="sh">'</span><span class="s">a</span><span class="sh">'</span> <span class="n">referenced</span> <span class="n">before</span> <span class="n">assignment</span>
+
+    
+<span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">def</span> <span class="nf">func</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">a</span>
+    <span class="n">a</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="nf">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+<span class="nf">func</span><span class="p">()</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="mi">2</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p>需要注意的是，<code class="language-plaintext highlighter-rouge">global</code>语句是使得标识符被解读为<strong>全局变量</strong>，因此在模块中不需要声明该变量，只要运行了该<code class="language-plaintext highlighter-rouge">global</code>语句，就可以在模块内访问到该变量。此外对于嵌套函数而言，内部函数中若使用了global 变量，它将影响的是全局变量而不是外部函数内的局部变量。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">outer</span><span class="p">():</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">inner</span><span class="p">():</span>
+        <span class="k">global</span> <span class="n">x</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="nf">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="nf">inner</span><span class="p">()</span>
+    <span class="nf">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="nf">outer</span><span class="p">()</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="mi">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">nonlocal</code>仅用于<strong>嵌套函数</strong>中，它使得所列出的名称指向之前在最近的包含作用域中绑定的除全局变量以外的变量，即可以允许被封装的代码重新绑定局部作用域以外且非全局（模块）作用域当中的变量。需要注意的是，因为是变量的重绑定，因此在外层函数中必须先声明了该变量。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">outer</span><span class="p">():</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="sh">"</span><span class="s">local</span><span class="sh">"</span>
+
+    <span class="k">def</span> <span class="nf">inner</span><span class="p">():</span>
+        <span class="k">nonlocal</span> <span class="n">x</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="sh">"</span><span class="s">nonlocal</span><span class="sh">"</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">inner:</span><span class="sh">"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="nf">inner</span><span class="p">()</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">outer:</span><span class="sh">"</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+<span class="nf">outer</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">inner</span><span class="p">:</span> <span class="k">nonlocal</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">outer</span><span class="p">:</span> <span class="k">nonlocal</span>
+</code></pre></div></div>
+
+<h2 id="for-statement">For statement</h2>
+
+<p>借鉴于 <a href="https://docs.python.org/zh-cn/3/reference/compound_stmts.html#the-for-statement">Python语言参考</a>、<a href="https://github.com/Junnplus/blog/issues/27">Python中的循环语句</a></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">for_stmt</span> <span class="p">::</span><span class="o">=</span>  <span class="sh">"</span><span class="s">for</span><span class="sh">"</span> <span class="n">target_list</span> <span class="sh">"</span><span class="s">in</span><span class="sh">"</span> <span class="n">expression_list</span> <span class="sh">"</span><span class="s">:</span><span class="sh">"</span> <span class="n">suite</span>
+              <span class="p">[</span><span class="sh">"</span><span class="s">else</span><span class="sh">"</span> <span class="sh">"</span><span class="s">:</span><span class="sh">"</span> <span class="n">suite</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">for</code>语句对序列或其他可迭代对象中的元素进行迭代，在执行时系统会对<code class="language-plaintext highlighter-rouge">expression_list</code>的结果（例如一个可迭代对象）<strong>调用<code class="language-plaintext highlighter-rouge">iter()</code>方法来创建一个迭代器</strong>，然后为迭代器每一项均执行一次子语句。若循环时正常结束而不是通过<code class="language-plaintext highlighter-rouge">break</code>语句，那么在存在<code class="language-plaintext highlighter-rouge">else</code>语句时，将执行<code class="language-plaintext highlighter-rouge">else</code>代码块中的子语句。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">dis</span>
+<span class="n">dis</span><span class="p">.</span><span class="nf">dis</span><span class="p">(</span><span class="sh">'</span><span class="s">for i in [1,2,3]:i = 1;j=</span><span class="sh">"</span><span class="s">r</span><span class="sh">"'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+  <span class="mi">1</span>           <span class="mi">0</span> <span class="n">SETUP_LOOP</span>              <span class="mi">20</span> <span class="p">(</span><span class="n">to</span> <span class="mi">22</span><span class="p">)</span>
+              <span class="mi">2</span> <span class="n">LOAD_CONST</span>               <span class="mi">0</span> <span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+              <span class="mi">4</span> <span class="n">GET_ITER</span>
+        <span class="o">&gt;&gt;</span>    <span class="mi">6</span> <span class="n">FOR_ITER</span>                <span class="mi">12</span> <span class="p">(</span><span class="n">to</span> <span class="mi">20</span><span class="p">)</span>
+              <span class="mi">8</span> <span class="n">STORE_NAME</span>               <span class="mi">0</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
+             <span class="mi">10</span> <span class="n">LOAD_CONST</span>               <span class="mi">1</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+             <span class="mi">12</span> <span class="n">STORE_NAME</span>               <span class="mi">0</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
+             <span class="mi">14</span> <span class="n">LOAD_CONST</span>               <span class="mi">2</span> <span class="p">(</span><span class="sh">'</span><span class="s">r</span><span class="sh">'</span><span class="p">)</span>
+             <span class="mi">16</span> <span class="n">STORE_NAME</span>               <span class="mi">1</span> <span class="p">(</span><span class="n">j</span><span class="p">)</span>
+             <span class="mi">18</span> <span class="n">JUMP_ABSOLUTE</span>            <span class="mi">6</span>
+        <span class="o">&gt;&gt;</span>   <span class="mi">20</span> <span class="n">POP_BLOCK</span>
+        <span class="o">&gt;&gt;</span>   <span class="mi">22</span> <span class="n">LOAD_CONST</span>               <span class="mi">3</span> <span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+             <span class="mi">24</span> <span class="n">RETURN_VALUE</span>
+</code></pre></div></div>
+
+<p>反汇编可以看出<code class="language-plaintext highlighter-rouge">for</code>循环以<code class="language-plaintext highlighter-rouge">SETUP_LOOP</code>指令开始，<code class="language-plaintext highlighter-rouge">POP_BLOCK</code>指令结束。<code class="language-plaintext highlighter-rouge">GET_ITER</code>指令（<code class="language-plaintext highlighter-rouge">Implements TOS = iter(TOS)</code>）得到程序运行栈栈顶对象的迭代器（即创建了迭代器），<code class="language-plaintext highlighter-rouge">FOR_ITER</code>对迭代器进行迭代，若得到迭代器中下一个元素则将该元素对象压入运行时栈，然后执行<code class="language-plaintext highlighter-rouge">STORE_NAME</code> 将变量<code class="language-plaintext highlighter-rouge">i</code>及对应值压栈，然后执行子语句。<code class="language-plaintext highlighter-rouge">JUMP_ABSOLUTE</code>指令用于跳至下一次迭代，迭代结束后，将弹出栈顶迭代器对象把并跳至<code class="language-plaintext highlighter-rouge">POP_BLOCK</code>指令弹出整个block结构。</p>
+
+<p><em>NOTING:</em></p>
+
+<blockquote>
+  <p>循环中的变量每次都会使用<code class="language-plaintext highlighter-rouge">STORE_NAME</code>指令进行重新赋值，若子语句中也对同一变量赋值（例中<code class="language-plaintext highlighter-rouge">i</code>）对循环本身不会存在影响，但只要迭代器未空，其下一次必会被覆盖，直到最后一次迭代，最后一次迭代结束后，该变量将不会被循环重新赋值。</p>
+
+  <p>此外，迭代时会有一个内部计数器来跟踪下一个需要使用的项，每次迭代就会递增计数器，直至数值与序列长度相等，因此如果修改被迭代的序列，在当前项之前插入或删除都会导致访问错误（重复处理/少处理），因此存在修改需求时最好使用切片创建一个副本。</p>
+</blockquote>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dis</span><span class="p">.</span><span class="nf">dis</span><span class="p">(</span><span class="sh">'</span><span class="s">for i in range(3): pass</span><span class="sh">'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+  <span class="mi">1</span>           <span class="mi">0</span> <span class="n">SETUP_LOOP</span>              <span class="mi">16</span> <span class="p">(</span><span class="n">to</span> <span class="mi">18</span><span class="p">)</span>
+              <span class="mi">2</span> <span class="n">LOAD_NAME</span>                <span class="mi">0</span> <span class="p">(</span><span class="nb">range</span><span class="p">)</span>
+              <span class="mi">4</span> <span class="n">LOAD_CONST</span>               <span class="mi">0</span> <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+              <span class="mi">6</span> <span class="n">CALL_FUNCTION</span>            <span class="mi">1</span>
+              <span class="mi">8</span> <span class="n">GET_ITER</span>
+        <span class="o">&gt;&gt;</span>   <span class="mi">10</span> <span class="n">FOR_ITER</span>                 <span class="mi">4</span> <span class="p">(</span><span class="n">to</span> <span class="mi">16</span><span class="p">)</span>
+             <span class="mi">12</span> <span class="n">STORE_NAME</span>               <span class="mi">1</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
+             <span class="mi">14</span> <span class="n">JUMP_ABSOLUTE</span>           <span class="mi">10</span>
+        <span class="o">&gt;&gt;</span>   <span class="mi">16</span> <span class="n">POP_BLOCK</span>
+        <span class="o">&gt;&gt;</span>   <span class="mi">18</span> <span class="n">LOAD_CONST</span>               <span class="mi">1</span> <span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+             <span class="mi">20</span> <span class="n">RETURN_VALUE</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">for _ in range()</code>语句中，也是依靠<code class="language-plaintext highlighter-rouge">for</code>创建的迭代器，而不是因为<code class="language-plaintext highlighter-rouge">range</code>是迭代器，实际上<code class="language-plaintext highlighter-rouge">range</code>、<code class="language-plaintext highlighter-rouge">list</code>、<code class="language-plaintext highlighter-rouge">tuple</code>对象是三种基本的序列类型，他们只实现了<code class="language-plaintext highlighter-rouge">__iter__</code>函数，并未实现<code class="language-plaintext highlighter-rouge">__next__</code>函数，也就是说它们都只是可迭代对象，而不是迭代器。相比于<code class="language-plaintext highlighter-rouge">list</code>和<code class="language-plaintext highlighter-rouge">tuple</code>，<code class="language-plaintext highlighter-rouge">range</code>最大的优势在于它总是只占用固定数量的内存，它会根据<code class="language-plaintext highlighter-rouge">start</code>、<code class="language-plaintext highlighter-rouge">stop</code>、<code class="language-plaintext highlighter-rouge">step</code>来计算得到具体单项或者子范围的值。</p>

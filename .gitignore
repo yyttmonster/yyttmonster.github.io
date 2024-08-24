@@ -1,8 +1,10 @@
-_site
+site/
 _posts/_draft
 _posts/_archive
 _archive
-node_modules
+node_module
+vendor/
+.bundle/
 .vscode
 *.log
 *.git

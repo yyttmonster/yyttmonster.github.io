@@ -1,0 +1,150 @@
+<p>借鉴于《Python源码剖析 陈儒》及<a href="https://github.com/python/cpython/tree/v3.7.0/Objects">python/cpython</a> v3.70</p>
+
+<p>python中一切都是对象，整数、字符串以及函数、类型都是对象。（对象是数据以及基于这些数据的操作的集合；对象是堆中分配的结构 - Objects are structures allocated on the heap）因此它们都可以赋值给一个变量，可以当作参数传递给一函数，可以作为一个函数的返回值，还可以作为元素添加到容器中。Python 对象大致有以下几类 ：Fundamental 对象: 类型对象； Numeric 对象: 数值对象；Sequence 对象: 容纳其他对象的序列；集合对象；Mapping 对象: 类似 C++中的 map 的关联对象； Internal 对象: Python 虚拟机在运行时内部使用的对象。
+<img src="/img/python_object_1.jpg" alt="avator" />
+在使用对象时，为了保证垃圾回收，需要设定一定的使用规范：</p>
+
+<ol>
+  <li>对象永远不会被静态分配，也不会在栈中分配（Objects are never allocated statically or on the stack），但类型对象是例外，所有的内建类型对象如整数类型对象、字符串类型对象都是被静态初始化的；</li>
+  <li>对象只能通过特定的宏或者函数才能存取（they must be accessed through special macros and functions only）</li>
+</ol>
+
+<p>对象一旦被分配，那么他的大小以及地址就会固定，不会改变，当对象需要包含一个大小可变的数据时，只需要包含指向对象的可变部分的指针。并不是所有具有相同类型的对象都有一样的大小。</p>
+<h2 id="pyobject及pyvarobject">PyObject及PyVarObject</h2>
+
+<p>Python 的对象机制是基于<strong>PyObject</strong>这个结构体展开的拓展开来的。</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Include/object.h (/* Object and type object interface */)</span>
+<span class="cp">#define _PyObject_HEAD_EXTRA            \
+    struct _object *_ob_next;           \
+    struct _object *_ob_prev;
+</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">_object</span> <span class="p">{</span>
+    <span class="n">_PyObject_HEAD_EXTRA</span>    <span class="c1">// 双向链表 垃圾回收需要用到（其实该名称就会被define中的两个指针替代）</span>
+    <span class="n">Py_ssize_t</span> <span class="n">ob_refcnt</span><span class="p">;</span>   <span class="c1">// 引用计数，为零时，对象便被从堆中移除</span>
+    <span class="k">struct</span> <span class="n">_typeobject</span> <span class="o">*</span><span class="n">ob_type</span><span class="p">;</span>    <span class="c1">// 指向类型对象的指针，决定了对象的类型，对象创建时，它便被固定了</span>
+<span class="p">}</span> <span class="n">PyObject</span><span class="p">;</span>
+</code></pre></div></div>
+<p>python所有对象都会有以上相同的内容，每一个对象的引用计数、类型信息都保存在这部分中。</p>
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//Include/object.h </span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">PyObject</span> <span class="n">ob_base</span><span class="p">;</span> 
+    <span class="n">Py_ssize_t</span> <span class="n">ob_size</span><span class="p">;</span> <span class="cm">/* Number of items in variable part */</span>
+<span class="p">}</span> <span class="n">PyVarObject</span><span class="p">;</span>
+</code></pre></div></div>
+<p>python对象中还分为定长对象和变长对象两种，由源码可知变长对象实际上只是增加了一个用于存储元素个数的变量 ob_size（是元素个数而不是字节数），所有的变长对象都会含有以上的PyVarObject对象。</p>
+
+<h2 id="类型对象">类型对象</h2>
+
+<p><strong>PyObject</strong> 的 对象类型指针<code class="language-plaintext highlighter-rouge">struct _typeobject *ob_type</code>，它指向的类型对象就决定了一个对象是什么类型的。它不仅仅决定了一个对象的类型，还包含大量的<code class="language-plaintext highlighter-rouge">元信息</code>， 例如创建对象需要分配多少内存，对象都支持哪些操作等等。</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Include/object.h</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">_typeobject</span> <span class="p">{</span>
+    <span class="c1">//#define PyObject_VAR_HEAD      PyVarObject ob_base;</span>
+    <span class="n">PyObject_VAR_HEAD</span> <span class="c1">//这表明类型对象是一个变长的对象</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tp_name</span><span class="p">;</span> <span class="cm">/* For printing, in format "&lt;module&gt;.&lt;name&gt;" */</span> <span class="c1">// 类型名，主要用于 Python 内部调试用</span>
+    <span class="n">Py_ssize_t</span> <span class="n">tp_basicsize</span><span class="p">,</span> <span class="n">tp_itemsize</span><span class="p">;</span> <span class="cm">/* For allocation */</span>
+    <span class="c1">// 创建该类型对象分配的内存空间大小</span>
+
+    <span class="c1">// 一堆方法定义，函数和指针</span>
+    <span class="cm">/* Methods to implement standard operations */</span>
+    <span class="n">destructor</span> <span class="n">tp_dealloc</span><span class="p">;</span>
+    <span class="n">printfunc</span> <span class="n">tp_print</span><span class="p">;</span>
+    <span class="n">getattrfunc</span> <span class="n">tp_getattr</span><span class="p">;</span>
+    <span class="n">setattrfunc</span> <span class="n">tp_setattr</span><span class="p">;</span>
+    <span class="n">PyAsyncMethods</span> <span class="o">*</span><span class="n">tp_as_async</span><span class="p">;</span> <span class="cm">/* formerly known as tp_compare (Python 2)
+ or tp_reserved (Python 3) */</span>
+    <span class="n">reprfunc</span> <span class="n">tp_repr</span><span class="p">;</span>
+
+    <span class="cm">/* Method suites for standard classes */</span>
+    <span class="c1">// 标准类方法集</span>
+    <span class="n">PyNumberMethods</span> <span class="o">*</span><span class="n">tp_as_number</span><span class="p">;</span>  <span class="c1">// 数值对象操作</span>
+    <span class="n">PySequenceMethods</span> <span class="o">*</span><span class="n">tp_as_sequence</span><span class="p">;</span>  <span class="c1">// 序列对象操作</span>
+    <span class="n">PyMappingMethods</span> <span class="o">*</span><span class="n">tp_as_mapping</span><span class="p">;</span>  <span class="c1">// 字典对象操作</span>
+
+    <span class="c1">// 更多标准操作</span>
+    <span class="cm">/* More standard operations (here for binary compatibility) */</span>
+    <span class="n">hashfunc</span> <span class="n">tp_hash</span><span class="p">;</span>
+    <span class="n">ternaryfunc</span> <span class="n">tp_call</span><span class="p">;</span>
+    <span class="n">reprfunc</span> <span class="n">tp_str</span><span class="p">;</span>
+    <span class="n">getattrofunc</span> <span class="n">tp_getattro</span><span class="p">;</span>
+    <span class="n">setattrofunc</span> <span class="n">tp_setattro</span><span class="p">;</span>
+    <span class="p">......</span>
+
+<span class="p">}</span> <span class="n">PyTypeObject</span><span class="p">;</span>
+</code></pre></div></div>
+<h2 id="类型的类型">类型的类型</h2>
+
+<p>对于普通的对象，它的类型由<code class="language-plaintext highlighter-rouge">struct _typeobject *ob_type;</code>这个指针指向的类型对象确定，那么类型对象的类型又如何确定？实际上是由<code class="language-plaintext highlighter-rouge">PyType_Type</code>决定的，它包含一个指向自己的指针。</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Objects/typeobject.c</span>
+<span class="n">PyTypeObject</span> <span class="n">PyType_Type</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">PyVarObject_HEAD_INIT</span><span class="p">(</span><span class="o">&amp;</span><span class="n">PyType_Type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="s">"type"</span><span class="p">,</span>                            <span class="c1">// tp_name</span>
+    <span class="k">sizeof</span><span class="p">(</span><span class="n">PyHeapTypeObject</span><span class="p">),</span>          <span class="c1">// tp_basicsize</span>
+    <span class="k">sizeof</span><span class="p">(</span><span class="n">PyMemberDef</span><span class="p">),</span>               <span class="c1">// tp_itemsize</span>
+    <span class="p">......</span>
+<span class="p">};</span>
+</code></pre></div></div>
+<p>为了方便对对象最开始的引用计数、类型信息等内存的初始化定义了一些宏。</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Include/object.h</span>
+<span class="cp">#ifdef Py_TRACE_REFS
+</span>    <span class="cp">#define _PyObject_EXTRA_INIT 0, 0,
+#else
+</span>    <span class="cp">#define _PyObject_EXTRA_INIT
+#endif
+</span>
+<span class="cp">#define PyObject_HEAD_INIT(type)        \
+    { _PyObject_EXTRA_INIT              \
+    1, type },  \\ 1 -&gt; ob_refcnt
+</span>
+<span class="cp">#define PyVarObject_HEAD_INIT(type, size) \
+{ PyObject_HEAD_INIT(type) size },
+</span></code></pre></div></div>
+
+<p>对于<code class="language-plaintext highlighter-rouge">PyLong_Type</code>这样的一般类型对象是通过以下方式与<code class="language-plaintext highlighter-rouge">PyType_Type</code>关联的。</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Objects/longobject.c</span>
+
+<span class="n">PyTypeObject</span> <span class="n">PyLong_Type</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">PyVarObject_HEAD_INIT</span><span class="p">(</span><span class="o">&amp;</span><span class="n">PyType_Type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="s">"int"</span><span class="p">,</span>                                      <span class="cm">/* tp_name */</span>
+    <span class="n">offsetof</span><span class="p">(</span><span class="n">PyLongObject</span><span class="p">,</span> <span class="n">ob_digit</span><span class="p">),</span>           <span class="cm">/* tp_basicsize */</span>
+    <span class="k">sizeof</span><span class="p">(</span><span class="n">digit</span><span class="p">),</span>                              <span class="cm">/* tp_itemsize */</span>
+
+    <span class="p">......</span>
+<span class="p">};</span>
+</code></pre></div></div>
+<p><img src="/img/python_object_2.jpg" alt="avator" />
+上图是<code class="language-plaintext highlighter-rouge">PyLongObject</code>运行时的示意图（CPython2 的整数对象 有 <code class="language-plaintext highlighter-rouge">PyIntObject</code> 和 <code class="language-plaintext highlighter-rouge">PyLongObject</code> 两种， CPython3 只保留了 <code class="language-plaintext highlighter-rouge">PyLongObject</code>）。第一部分可以看出它是一个变长对象，第二部分表明是<code class="language-plaintext highlighter-rouge">Long</code>类型，最后<code class="language-plaintext highlighter-rouge">PyLong_Type</code>的类型由<code class="language-plaintext highlighter-rouge">PyType_Type</code>决定。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MyClass</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>  
+    <span class="k">pass</span>  
+  
+<span class="n">a</span> <span class="o">=</span> <span class="nc">MyClass</span><span class="p">()</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">type</span><span class="p">(</span><span class="n">MyClass</span><span class="p">))</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">type</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">type</span><span class="p">(</span><span class="nf">type</span><span class="p">(</span><span class="n">a</span><span class="p">)))</span>
+<span class="nf">print</span><span class="p">(</span><span class="nf">type</span><span class="p">(</span><span class="nf">type</span><span class="p">(</span><span class="nf">type</span><span class="p">(</span><span class="n">a</span><span class="p">))))</span>
+
+<span class="o">&lt;</span><span class="k">class</span> <span class="err">'</span><span class="nc">type</span><span class="sh">'</span><span class="s">&gt;
+&lt;class </span><span class="sh">'</span><span class="n">__main__</span><span class="p">.</span><span class="n">MyClass</span><span class="sh">'</span><span class="s">&gt;
+&lt;class </span><span class="sh">'</span><span class="nb">type</span><span class="sh">'</span><span class="s">&gt;
+&lt;class </span><span class="sh">'</span><span class="nb">type</span><span class="sh">'</span><span class="s">&gt;
+
+b = 1
+print(type(b))
+print(type(type(b)))
+print(id(type(MyClass)))
+print(id(type(type(b))))
+
+&lt;class </span><span class="sh">'</span><span class="nb">int</span><span class="sh">'</span><span class="s">&gt;
+&lt;class </span><span class="sh">'</span><span class="nb">type</span><span class="sh">'</span><span class="s">&gt;
+1674628000
+1674628000
+</span></code></pre></div></div>
+<p>所有用户自定义 <code class="language-plaintext highlighter-rouge">class</code> 所对应的 <code class="language-plaintext highlighter-rouge">PyTypeObject</code> 对象都是通过 <code class="language-plaintext highlighter-rouge">PyType_Type</code>创建的，所有类的类型都是<code class="language-plaintext highlighter-rouge">type</code>，都是同一个对象，它包含指向自己的指针。</p>
+
+<p>正是由于<code class="language-plaintext highlighter-rouge">PyObject</code>和<code class="language-plaintext highlighter-rouge">PyTypeObject</code>，python实现了对象的多态性。创建整数对象时，python内部使用<code class="language-plaintext highlighter-rouge">PyObject*</code>这样一个泛型指针，而不是一个<code class="language-plaintext highlighter-rouge">PyIntObject*</code>变量来保存并维护这个对象，指针所指对象的类型并不知道，只是从该对象的<code class="language-plaintext highlighter-rouge">ob_type</code>动态判断，调用对象函数时，也就会动态调用<code class="language-plaintext highlighter-rouge">ob_type</code>中定义的对应的操作。</p>
+
+<h2 id="type对象和class对象">type对象和class对象</h2>
+
+<p>刚谈到所有类的类型都是同一个——<code class="language-plaintext highlighter-rouge">type</code>，<code class="language-plaintext highlighter-rouge">type</code>即是类，又是自己的实例对象，称作<code class="language-plaintext highlighter-rouge">metaclass</code>，<code class="language-plaintext highlighter-rouge">type</code>和最开始提到的基类<code class="language-plaintext highlighter-rouge">object</code>又存在一定的关系，<code class="language-plaintext highlighter-rouge">type</code>是<code class="language-plaintext highlighter-rouge">object</code>的子类，<code class="language-plaintext highlighter-rouge">object</code>却又是<code class="language-plaintext highlighter-rouge">type</code>的一个实例化对象，关系如下图：
+<img src="/img/python_object_3.jpg" alt="avator" />
+其中，虚线表示<code class="language-plaintext highlighter-rouge">is-instance-of</code>即类与实例关系，实线表示<code class="language-plaintext highlighter-rouge">is-kind-of</code>即基类与子类间的关系。可以看出，所有的类都是<code class="language-plaintext highlighter-rouge">type</code>的实例。</p>

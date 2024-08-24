@@ -1,0 +1,123 @@
+<p>借鉴于《Python源码剖析 陈儒》、<a href="https://github.com/python/cpython/blob/v3.7.0/Include/funcobject.h">python/cpython</a> v3.70</p>
+
+<p>函数是组织好的，可重复使用的，用来实现单一，或相关联功能的代码段，函数机制使得我们能够实现功能分解，代码复用等目标。</p>
+
+<h2 id="pyfunctionobject与pycodeobject">PyFunctionObject与PyCodeObject</h2>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Include/funcobject.h</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">PyObject_HEAD</span>
+    <span class="c1">// 对应函数编译后的PyCodeObject对象</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_code</span><span class="p">;</span> <span class="cm">/* A code object, the __code__ attribute */</span>
+    <span class="c1">// 函数运行时的global命名空间</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_globals</span><span class="p">;</span> <span class="cm">/* A dictionary (other mappings won't do) */</span>
+    <span class="c1">// 默认参数</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_defaults</span><span class="p">;</span> <span class="cm">/* NULL or a tuple */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_kwdefaults</span><span class="p">;</span> <span class="cm">/* NULL or a dict */</span>
+    <span class="c1">// 用于实现闭包</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_closure</span><span class="p">;</span> <span class="cm">/* NULL or a tuple of cell objects */</span>
+    <span class="c1">// 函数文档</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_doc</span><span class="p">;</span> <span class="cm">/* The __doc__ attribute, can be anything */</span>
+    <span class="c1">// 函数名</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_name</span><span class="p">;</span> <span class="cm">/* The __name__ attribute, a string object */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_dict</span><span class="p">;</span> <span class="cm">/* The __dict__ attribute, a dict or NULL */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_weakreflist</span><span class="p">;</span> <span class="cm">/* List of weak references */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_module</span><span class="p">;</span> <span class="cm">/* The __module__ attribute, can be anything */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_annotations</span><span class="p">;</span> <span class="cm">/* Annotations, a dict or NULL */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">func_qualname</span><span class="p">;</span> <span class="cm">/* The qualified name */</span>
+    <span class="cm">/* Invariant:
+    * func_closure contains the bindings for func_code-&gt;co_freevars, so
+    * PyTuple_Size(func_closure) == PyCode_GetNumFree(func_code)
+    * (func_closure may be NULL if PyCode_GetNumFree(func_code) == 0).
+    */</span>
+<span class="p">}</span> <span class="n">PyFunctionObject</span><span class="p">;</span>
+
+</code></pre></div></div>
+<p><strong><code class="language-plaintext highlighter-rouge">PyFunctionObject</code>是python代码在</strong>运行时动态产生<strong>的，在执行一个<code class="language-plaintext highlighter-rouge">def</code>语句时创建。</strong><code class="language-plaintext highlighter-rouge">func_code</code>中存储了函数的静态信息（即可从源码中直接看到的信息，例如对于一个数值赋值表达式，变量名与常量值的联系就是一种静态信息），实际上，它指向与函数代码相对应的<code class="language-plaintext highlighter-rouge">PyCodeObject</code>对象。<code class="language-plaintext highlighter-rouge">PyFunctionObject</code>还包含了函数在执行时所需的动态信息，这些信息无法存储于<code class="language-plaintext highlighter-rouge">PyCodeObject</code>对象中。<code class="language-plaintext highlighter-rouge">func_globals</code>是函数的<code class="language-plaintext highlighter-rouge">global</code>命名空间，由上一层的<code class="language-plaintext highlighter-rouge">PyFrameObject</code>传递而来，例如函数可以使用函数所在模块的全局变量便是这个变量在发挥作用。</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">PyObject_HEAD</span>
+    <span class="c1">//Code Block中的位置参数的个数，如函数中的参数个数</span>
+    <span class="kt">int</span> <span class="n">co_argcount</span><span class="p">;</span> <span class="cm">/* #arguments, except *args */</span>
+    <span class="kt">int</span> <span class="n">co_kwonlyargcount</span><span class="p">;</span> <span class="cm">/* #keyword only arguments */</span>
+    <span class="c1">// Code Block中局部变量个数</span>
+    <span class="kt">int</span> <span class="n">co_nlocals</span><span class="p">;</span> <span class="cm">/* #local variables */</span>
+    <span class="c1">// 执行该 Code Block所需的栈空间</span>
+    <span class="kt">int</span> <span class="n">co_stacksize</span><span class="p">;</span> <span class="cm">/* #entries needed for evaluation stack */</span>
+    <span class="kt">int</span> <span class="n">co_flags</span><span class="p">;</span> <span class="cm">/* CO_..., see below */</span>
+    <span class="kt">int</span> <span class="n">co_firstlineno</span><span class="p">;</span> <span class="cm">/* first source line number */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_code</span><span class="p">;</span> <span class="cm">/* instruction opcodes */</span>
+    <span class="c1">// PyTupleObject，保存所有常量</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_consts</span><span class="p">;</span> <span class="cm">/* list (constants used) */</span>
+    <span class="c1">// PyTupleObject，保存所有符号</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_names</span><span class="p">;</span> <span class="cm">/* list of strings (names used) */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_varnames</span><span class="p">;</span> <span class="cm">/* tuple of strings (local variable names) */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_freevars</span><span class="p">;</span> <span class="cm">/* tuple of strings (free variable names) */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_cellvars</span><span class="p">;</span> <span class="cm">/* tuple of strings (cell variable names) */</span>
+    <span class="cm">/* The rest aren't used in either hash or comparisons, except for co_name,
+    used in both. This is done to preserve the name and line number
+    for tracebacks and debuggers; otherwise, constant de-duplication
+    would collapse identical functions/lambdas defined on different lines.
+    */</span>
+    <span class="n">Py_ssize_t</span> <span class="o">*</span><span class="n">co_cell2arg</span><span class="p">;</span> <span class="cm">/* Maps cell vars which are arguments. */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_filename</span><span class="p">;</span> <span class="cm">/* unicode (where it was loaded from) */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_name</span><span class="p">;</span> <span class="cm">/* unicode (name, for reference) */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_lnotab</span><span class="p">;</span> <span class="cm">/* string (encoding addr&lt;-&gt;lineno mapping) See
+    Objects/lnotab_notes.txt for details. */</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">co_zombieframe</span><span class="p">;</span> <span class="cm">/* for optimization only (see frameobject.c) */</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">co_weakreflist</span><span class="p">;</span> <span class="cm">/* to support weakrefs to code objects */</span>
+    <span class="cm">/* Scratch space for extra data relating to the code object.
+    Type is a void* to keep the format private in codeobject.c to force
+    people to go through the proper APIs. */</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">co_extra</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">PyCodeObject</span><span class="p">;</span>
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">PyCodeObject</code>是对一段Python源码的静态表示，在Python中对源代码<strong>编译</strong>之后，对一个<code class="language-plaintext highlighter-rouge">Code Block</code>（Python中无块级作用域，一个<code class="language-plaintext highlighter-rouge">Code Block</code>指的是一个命名空间——LEGB）会产生一个<code class="language-plaintext highlighter-rouge">PyCodeObject</code>，该对象包含该<code class="language-plaintext highlighter-rouge">Code Block</code>的一些静态信息。因为python虽然是解释性语言，但在执行前，依旧会进行编译操作，编译生成的<code class="language-plaintext highlighter-rouge">pyc</code>文件只是<code class="language-plaintext highlighter-rouge">PyCodeObject</code>对象在硬盘上的表现形式，编译真正的结果是<code class="language-plaintext highlighter-rouge">PyCodeObject</code>对象。</p>
+
+<p>对于某一个定义有函数的<code class="language-plaintext highlighter-rouge">.py</code>模块来说，对于该模块会有一个<code class="language-plaintext highlighter-rouge">PyCodeObject</code>，而对它内部定义的函数，也会有一个<code class="language-plaintext highlighter-rouge">PyCodeObject</code>，这两者必然是存在关联的，事实上，对于函数所对应的<code class="language-plaintext highlighter-rouge">PyCodeObject</code>将会作为一个常量，存储于模块对应的<code class="language-plaintext highlighter-rouge">PyCodeObject</code>的<code class="language-plaintext highlighter-rouge">*co_consts</code>常量表中。这里表明<strong>函数的声明和定义其实是分离的，函数声明(def 语句——完成函数对象的创建)的字节码指令序列是在<code class="language-plaintext highlighter-rouge">.py</code>模块对应的<code class="language-plaintext highlighter-rouge">*PyCodeObject</code>中，而函数实现（函数内部语句）的字节码指令序列是在函数对应的<code class="language-plaintext highlighter-rouge">PyCodeObject</code>中的。</strong></p>
+
+<p>这里需要注意的是函数的<code class="language-plaintext highlighter-rouge">PyCodeObject</code>是在编译时就创建的，但<code class="language-plaintext highlighter-rouge">PyFunctionObject</code>是在程序执行到<code class="language-plaintext highlighter-rouge">def</code>语句时才创建的，此时其内部的<code class="language-plaintext highlighter-rouge">func_code</code>指针才指向<code class="language-plaintext highlighter-rouge">PyCodeObject</code>。</p>
+
+<h2 id="函数调用">函数调用</h2>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Python/ceval.c  4532-4603</span>
+<span class="n">Py_LOCAL_INLINE</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">)</span> <span class="n">_Py_HOT_FUNCTION</span>
+<span class="nf">call_function</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">***</span><span class="n">pp_stack</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">oparg</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">kwnames</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="p">......</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">PyFunction_Check</span><span class="p">(</span><span class="n">func</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">_PyFunction_FastCallKeywords</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">nargs</span><span class="p">,</span> <span class="n">kwnames</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">_PyObject_FastCallKeywords</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">nargs</span><span class="p">,</span> <span class="n">kwnames</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">func</span><span class="p">);</span>
+<span class="p">......</span>
+<span class="p">}</span>
+
+<span class="c1">// Objects/call.c 386-440</span>
+<span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">_PyFunction_FastCallKeywords</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">func</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="k">const</span> <span class="o">*</span><span class="n">stack</span><span class="p">,</span>
+                             <span class="n">Py_ssize_t</span> <span class="n">nargs</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">kwnames</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">......</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">argdefs</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span> <span class="n">co</span><span class="o">-&gt;</span><span class="n">co_argcount</span> <span class="o">==</span> <span class="n">nargs</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">function_code_fastcall</span><span class="p">(</span><span class="n">co</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">nargs</span><span class="p">,</span> <span class="n">globals</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">......</span>     
+<span class="p">}</span>
+
+<span class="c1">// Objects/call.c 256-295</span>
+<span class="k">static</span> <span class="n">PyObject</span><span class="o">*</span> <span class="n">_Py_HOT_FUNCTION</span>
+<span class="nf">function_code_fastcall</span><span class="p">(</span><span class="n">PyCodeObject</span> <span class="o">*</span><span class="n">co</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="k">const</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">nargs</span><span class="p">,</span>
+                      <span class="n">PyObject</span> <span class="o">*</span><span class="n">globals</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">......</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">_PyFrame_New_NoTrack</span><span class="p">(</span><span class="n">tstate</span><span class="p">,</span> <span class="n">co</span><span class="p">,</span> <span class="n">globals</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="p">......</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">PyEval_EvalFrameEx</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+    <span class="p">......</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在<code class="language-plaintext highlighter-rouge">def</code>语句后，一个函数对象便被创建了，这个保存了函数静态信息与上下文环境的<code class="language-plaintext highlighter-rouge">PyFunctionObject</code>对象创建后便被压入运行时栈中。在函数调用时，<code class="language-plaintext highlighter-rouge">call_function</code>中的<code class="language-plaintext highlighter-rouge">pp_stack</code>就是当前运行时栈的栈顶指针，然后程序通过<code class="language-plaintext highlighter-rouge">_PyFunction_FastCallKeywords</code>等函数利用<code class="language-plaintext highlighter-rouge">PyFunctionObject</code>中的信息创建新的栈帧对象<code class="language-plaintext highlighter-rouge">PyFrameObject</code>，然后最终调用<code class="language-plaintext highlighter-rouge">PyEval_EvalFrameEx</code>，在一个新的栈帧环境下来执行函数对应的字节码指令序列，也就是说，<code class="language-plaintext highlighter-rouge">PyFunctionObject</code>主要是对字节码指令以及<code class="language-plaintext highlighter-rouge">global</code>命名空间的一种打包和运输方式。</p>

@@ -1,0 +1,156 @@
+<p>借鉴于《Python源码剖析 陈儒》及<a href="https://github.com/python/cpython/blob/v3.7.0/Objects/listobject.c">python/cpython</a>v3.70</p>
+
+<p><code class="language-plaintext highlighter-rouge">list</code>是python中的一类基础数据结构，它有效的支持元素的插入、添加、删除等操作，并且在python中，<code class="language-plaintext highlighter-rouge">list</code>的元素可以是任何类型的数据，因为它存储的都是<code class="language-plaintext highlighter-rouge">PyObject*</code>指针。</p>
+
+<h2 id="pylistobject">PyListObject</h2>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="c1">// Include/listobject.h</span>
+    <span class="n">PyObject_VAR_HEAD</span>
+    <span class="cm">/* Vector of pointers to list elements. list[0] is ob_item[0], etc. */</span>
+    <span class="n">PyObject</span> <span class="o">**</span><span class="n">ob_item</span><span class="p">;</span> <span class="c1">//元素列表所在内存块首地址</span>
+    <span class="cm">/* ob_item contains space for 'allocated' elements. The number
+    * currently in use is ob_size.
+    * Invariants:
+    * 0 &lt;= ob_size &lt;= allocated
+    * len(list) == ob_size
+    * ob_item == NULL implies ob_size == allocated == 0
+    * list.sort() temporarily sets allocated to -1 to detect mutations.
+    *
+    * Items must normally not be NULL, except during construction when
+    * the list is not yet visible outside the function that builds it.
+    */</span>
+    <span class="n">Py_ssize_t</span> <span class="n">allocated</span><span class="p">;</span> <span class="c1">//当前列表可容纳元素的总数</span>
+<span class="p">}</span> <span class="n">PyListObject</span><span class="p">;</span>
+</code></pre></div></div>
+<p>从定义中可以看出，<code class="language-plaintext highlighter-rouge">PyListObject</code>是一个变长对象，同时也是一个可变对象。在变长对象<code class="language-plaintext highlighter-rouge">PyObject_VAR_HEAD</code>中存在一个维护大小的变量<code class="language-plaintext highlighter-rouge">ob_size</code>，列表对象中又存在<code class="language-plaintext highlighter-rouge">allocated</code>变量，也是一个大小值，两者哪一个才是表示列表元素多少呢？不难想象，对于一个列表，频繁的插入、删除操作无法避免，此时如果每次插入/删除一个元素都需要申请/释放空间，一者浪费时间，二者list需要的是连续空间，因此python内存管理策略与c++一样，创建列表时，我们就会申请一片连续空间，这片空间大小就由<code class="language-plaintext highlighter-rouge">allocated</code>管理，而列表实际元素个数则有<code class="language-plaintext highlighter-rouge">ob_size</code>维护，即有<code class="language-plaintext highlighter-rouge">0 &lt;= ob_size &lt;= allocated</code>，当空间不足时，则会重新申请更大的一片连续空间，在空间过大，即<code class="language-plaintext highlighter-rouge">ob_size &lt; allocated/2</code>时，会收缩内存空间大小（空间重分配在<code class="language-plaintext highlighter-rouge">list_resize()</code>中）。</p>
+
+<h2 id="列表的创建与对象缓冲池">列表的创建与对象缓冲池</h2>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">///Objects/listobject.c</span>
+<span class="n">PyObject</span> <span class="o">*</span> <span class="nf">PyList_New</span><span class="p">(</span><span class="n">Py_ssize_t</span> <span class="n">size</span><span class="p">){</span>
+    <span class="n">PyListObject</span> <span class="o">*</span><span class="n">op</span><span class="p">;</span>
+<span class="cp">#ifdef SHOW_ALLOC_COUNT
+</span>    <span class="k">static</span> <span class="kt">int</span> <span class="n">initialized</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">initialized</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">Py_AtExit</span><span class="p">(</span><span class="n">show_alloc</span><span class="p">);</span>
+        <span class="n">initialized</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">PyErr_BadInternalCall</span><span class="p">();</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">//缓冲池可用</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">numfree</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">numfree</span><span class="o">--</span><span class="p">;</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">free_list</span><span class="p">[</span><span class="n">numfree</span><span class="p">];</span>
+        <span class="n">_Py_NewReference</span><span class="p">((</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">)</span><span class="n">op</span><span class="p">);</span>
+        <span class="cp">#ifdef SHOW_ALLOC_COUNT
+</span>            <span class="n">count_reuse</span><span class="o">++</span><span class="p">;</span>
+        <span class="cp">#endif
+</span>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">//缓冲池不可用</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">PyObject_GC_New</span><span class="p">(</span><span class="n">PyListObject</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">PyList_Type</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">op</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="cp">#ifdef SHOW_ALLOC_COUNT
+</span>            <span class="n">count_alloc</span><span class="o">++</span><span class="p">;</span>
+        <span class="cp">#endif
+</span>    <span class="p">}</span>
+    <span class="c1">//为元素列表申请空间</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_item</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_item</span> <span class="o">=</span> <span class="p">(</span><span class="n">PyObject</span> <span class="o">**</span><span class="p">)</span> <span class="n">PyMem_Calloc</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">));</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_item</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">Py_DECREF</span><span class="p">(</span><span class="n">op</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">PyErr_NoMemory</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">Py_SIZE</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
+    <span class="n">op</span><span class="o">-&gt;</span><span class="n">allocated</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
+    <span class="n">_PyObject_GC_TRACK</span><span class="p">(</span><span class="n">op</span><span class="p">);</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">)</span> <span class="n">op</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">PyList_New</code>是列表创建的唯一方式，创建时仅提供大小，不需要提供元素类型，元素都是<code class="language-plaintext highlighter-rouge">PyObject*</code>指针。申请时，可以看到列表分为两部分，<strong>一部分是<code class="language-plaintext highlighter-rouge">PyListObject</code>本身</strong>，这部分可以使用缓冲池，<strong>另一部分是<code class="language-plaintext highlighter-rouge">PyListObject</code>维护的元素列表</strong>，这两部分内存是分离的，依靠<code class="language-plaintext highlighter-rouge">op-&gt;ob_item</code>联系。</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//Objects/listobject.c</span>
+<span class="cp">#ifndef PyList_MAXFREELIST
+#define PyList_MAXFREELIST 80
+#endif
+</span><span class="k">static</span> <span class="n">PyListObject</span> <span class="o">*</span><span class="n">free_list</span><span class="p">[</span><span class="n">PyList_MAXFREELIST</span><span class="p">];</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="n">numfree</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">list_dealloc</span><span class="p">(</span><span class="n">PyListObject</span> <span class="o">*</span><span class="n">op</span><span class="p">){</span>
+    <span class="n">Py_ssize_t</span> <span class="n">i</span><span class="p">;</span>
+    <span class="n">PyObject_GC_UnTrack</span><span class="p">(</span><span class="n">op</span><span class="p">);</span>
+    <span class="n">Py_TRASHCAN_SAFE_BEGIN</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+    <span class="c1">//销毁维护的元素列表</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_item</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="cm">/* Do it backwards, for Christian Tismer.
+        There's a simple test case where somehow this reduces
+        thrashing when a *very* large list is created and
+        immediately deleted. */</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">Py_SIZE</span><span class="p">(</span><span class="n">op</span><span class="p">);</span>
+        <span class="k">while</span> <span class="p">(</span><span class="o">--</span><span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">Py_XDECREF</span><span class="p">(</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_item</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+        <span class="p">}</span>
+        <span class="n">PyMem_FREE</span><span class="p">(</span><span class="n">op</span><span class="o">-&gt;</span><span class="n">ob_item</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="c1">//释放PyListObject本身</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">numfree</span> <span class="o">&lt;</span> <span class="n">PyList_MAXFREELIST</span> <span class="o">&amp;&amp;</span> <span class="n">PyList_CheckExact</span><span class="p">(</span><span class="n">op</span><span class="p">))</span>
+        <span class="n">free_list</span><span class="p">[</span><span class="n">numfree</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">op</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="n">Py_TYPE</span><span class="p">(</span><span class="n">op</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">tp_free</span><span class="p">((</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">)</span><span class="n">op</span><span class="p">);</span>
+    <span class="n">Py_TRASHCAN_SAFE_END</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>缓冲池中的<code class="language-plaintext highlighter-rouge">free_list</code>最多会维护80个<code class="language-plaintext highlighter-rouge">PyListObject</code>对象。在列表销毁时，我们可以看到，先是将维护的元素逐个销毁，将这部分空间完全归还给系统堆，最后再销毁<code class="language-plaintext highlighter-rouge">PyListObject</code>本身。<strong>删除时，若缓冲池中的<code class="language-plaintext highlighter-rouge">free_list</code>未满，我们将保留这个<code class="language-plaintext highlighter-rouge">PyListObject</code></strong>，这里就可以明白了，<code class="language-plaintext highlighter-rouge">free_list</code>中的<code class="language-plaintext highlighter-rouge">PyListObject</code>对象是何时创建的了。python启动时本来<code class="language-plaintext highlighter-rouge">free_list</code>是空的，在我们创建<code class="language-plaintext highlighter-rouge">PyListObject</code>后，在删除时，都会将这个对象中元素全部删除，但是对象本身却保留在了缓冲池中的<code class="language-plaintext highlighter-rouge">PyListObject</code>里。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">//</span> <span class="n">IDE</span>
+<span class="k">def</span> <span class="nf">test1</span><span class="p">():</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>  <span class="c1"># 2952873308808
+</span>    <span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.2</span><span class="p">]</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>  <span class="c1"># 2952873308744
+</span>    <span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>  <span class="c1"># 2952873309064
+</span>    <span class="k">del</span> <span class="n">a</span>  
+    <span class="k">del</span> <span class="n">b</span>  
+    <span class="k">del</span> <span class="n">c</span>
+    
+<span class="k">def</span> <span class="nf">test2</span><span class="p">():</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>  <span class="c1"># 2952873309064
+</span>    <span class="n">e</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>  <span class="c1"># 2952873308744
+</span>    <span class="n">f</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>  <span class="c1"># 2952873308808
+</span>    <span class="n">g</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>  <span class="c1"># 2952873308616
+</span>
+<span class="nf">test1</span><span class="p">()</span>
+<span class="nf">test2</span><span class="p">()</span>
+</code></pre></div></div>
+<p>在IDE中执行的结果展示了缓冲池的使用，可以看到不同代码块中共享了一个针对列表的缓冲池，也就是说这个缓冲池并不是像<code class="language-plaintext highlighter-rouge">str</code>一样存在的交互环境针对每个代码块的常量池，而应当是<code class="language-plaintext highlighter-rouge">free_list</code>（也可能存在其他情况，具体见内存管理）。为了确保正确性，我们可以在控制台中运行如下代码：</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">//</span> <span class="n">python</span> <span class="n">console</span>
+<span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>   <span class="c1"># 3054599811912
+</span><span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.2</span><span class="p">]</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>  <span class="c1"># 3054599812168
+</span><span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>  <span class="c1"># 3054599812104
+</span><span class="k">del</span> <span class="n">a</span>  
+<span class="k">del</span> <span class="n">b</span>  
+<span class="k">del</span> <span class="n">c</span>  
+<span class="n">d</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>  <span class="c1"># 3054599812168
+</span><span class="n">e</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>  <span class="c1"># 3054599811912
+</span><span class="n">f</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>  <span class="c1"># 3054599812232
+</span><span class="n">g</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">]</span>  
+<span class="nf">print</span><span class="p">(</span><span class="nf">id</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>  <span class="c1"># 3054599812808
+</span></code></pre></div></div>
+<p>虽然与预期存在差异，但是仍旧可以看见对<code class="language-plaintext highlighter-rouge">PyListObject</code>的重用（del删除的是引用，垃圾回收机制还未执行，列表删除时的保存<code class="language-plaintext highlighter-rouge">PyListObject</code>操作还未执行，可以在del语句后添加多次循环，使得垃圾回收机制有时间执行，就能得到预期结果）。</p>

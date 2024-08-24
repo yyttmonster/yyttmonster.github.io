@@ -1,0 +1,12 @@
+---
+layout:     post
+title:      "新开始"
+subtitle:   " \"做点自己的事情.\""
+date:       2024-08-24 18:05:00
+author:     "yyttmonster"
+header-img: "img/post-bg.jpg"
+tags:
+    - life
+---
+
+尝试重拾我的blog。

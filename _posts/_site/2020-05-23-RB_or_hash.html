@@ -1,0 +1,82 @@
+<p><code class="language-plaintext highlighter-rouge">c++ std::map</code>是由红黑树实现的，对于<code class="language-plaintext highlighter-rouge">Hashmap</code>则有另外的<code class="language-plaintext highlighter-rouge">std::unordered_map</code>，在<code class="language-plaintext highlighter-rouge">python</code>中<code class="language-plaintext highlighter-rouge">dict</code>则是由<code class="language-plaintext highlighter-rouge">hashmap</code>经由两层映射实现的，那么为什么<code class="language-plaintext highlighter-rouge">python</code>中没有使用红黑树呢？两者各自存在何种优势？</p>
+
+<h2 id="红黑树-or-avl-树">红黑树 or AVL 树</h2>
+
+<p>红黑树是一颗平衡二叉搜索树，它在每个结点上使用一个标志位来表示结点颜色，通过约束任何一条从根到叶子结点路径上各结点颜色来实现树的平衡（也可以通过边的颜色，例如左偏红黑树，它更易实现）。树中每个结点定义如下：</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">RBNode</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sh">"</span><span class="s">R</span><span class="sh">"</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">k</span><span class="o">=</span> <span class="n">k</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">left</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">right</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">parent</span> <span class="o">=</span> <span class="bp">None</span>
+</code></pre></div></div>
+<p>而同时另一类常用平衡树是<code class="language-plaintext highlighter-rouge">AVL tree</code>，它是通过使用一个树高属性来维护树的平衡，其结点定义如下：</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TreeNode</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>  
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>  
+        <span class="n">self</span><span class="p">.</span><span class="n">val</span> <span class="o">=</span> <span class="n">x</span>  
+        <span class="n">self</span><span class="p">.</span><span class="n">height</span> <span class="o">=</span> <span class="mi">0</span>  
+        <span class="n">self</span><span class="p">.</span><span class="n">left</span> <span class="o">=</span> <span class="bp">None</span>  
+        <span class="n">self</span><span class="p">.</span><span class="n">right</span> <span class="o">=</span> <span class="bp">None</span>
+</code></pre></div></div>
+<p>作为平衡二叉树，红黑树与AVL树其实都保证了<code class="language-plaintext highlighter-rouge">O(logn)</code>时间的查询、插入、删除操作，但实际上两者存在不同，主要是<strong>平衡的严格度</strong>。<strong>红黑树是通过结点颜色约束，实际上它并不严格要求左右子树高度相差小于或等于1，这导致红黑树树高在<code class="language-plaintext highlighter-rouge">logn ~ 2logn</code>间，而AVL树则是通过高度属性严格限制左右子树高度之差，树高保证在<code class="language-plaintext highlighter-rouge">logn</code>，这带来了两方面影响，一方面AVL的高严格度使得其查询操作实际优于红黑树，但另一方面却也致使插入和删除操作需要更多的旋转操作来维护这种严苛的平衡性</strong>。</p>
+
+<p>所以红黑树相对于AVL树来说，牺牲了部分平衡性以换取插入/删除操作时少量的旋转操作，整体来说效能要优于AVL树。同时，红黑树作为最常见的可持久化数据结构，需要保证可以高效的回滚到操作之前，此时红黑树一般情况下仅需保存<code class="language-plaintext highlighter-rouge">O(1)</code>步平衡维护操作，而AVL则是需要<code class="language-plaintext highlighter-rouge">O(logn)</code>步^[1]。当然，在查询操作远大于更新操作时，AVL 也未尝不是一个更佳的选择。</p>
+
+<p>[^1] <a href="https://discuss.fogcreek.com/joelonsoftware/default.asp?cmd=show&amp;ixPost=22948">AVL Trees vs. Red-Black Trees?</a></p>
+
+<h2 id="红黑树-or-hash">红黑树 or Hash</h2>
+
+<p>Hash即散列算法是一种压缩映射，它将任意长度的消息压缩成某一固定长度的消息摘要。Python中是将<code class="language-plaintext highlighter-rouge">hashable</code>对象（实现了<code class="language-plaintext highlighter-rouge">__hash__</code>函数）映射输出一个整数。相同输入哈希值相同，当不同输入得到相同的哈希值时，即是发生了碰撞，碰撞可以通过常见的开放定址法、拉链法解决，也可以使用再哈希法或公共溢出区法。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">a</span> <span class="o">=</span> <span class="sh">'</span><span class="s">1234abcd</span><span class="sh">'</span>  
+<span class="nf">print</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="nf">__hash__</span><span class="p">())</span> 
+
+<span class="o">-</span><span class="mi">6940744531799389829</span><span class="c1"># 第一次运行
+</span><span class="mi">5609426093497104243</span><span class="c1"># 第二次运行
+</span></code></pre></div></div>
+<p>需要注意的是，python中（3.3后），存在随机生成secret prefix/suffix的机制，因此对于同一输入，不同解释器进程得到的hash结果可能不同。</p>
+
+<p><em>Hashable objects are “salted” with an unpredictable random value. Although they remain constant within an individual Python process, they are not predictable between repeated invocations of Python.</em></p>
+
+<p>此外，python进行对象比较时，结果相同所需的唯一特征属性是其具有相同的哈希值；建议的做法是把参与比较的对象全部组件的哈希值混在一起，即将它们打包为一个元组并对该元组做哈希运算。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center"> </th>
+      <th style="text-align: center">Hash Table</th>
+      <th style="text-align: center">Red-Black Tree</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">Space</td>
+      <td style="text-align: center">O(n) : O(n)</td>
+      <td style="text-align: center">O(n) : O(n)</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Insert</td>
+      <td style="text-align: center">O(1) : O(n)</td>
+      <td style="text-align: center">O(log n) : O(log n)</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Fetch</td>
+      <td style="text-align: center">O(1) : O(n)</td>
+      <td style="text-align: center">O(log n) : O(log n)</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Delete</td>
+      <td style="text-align: center">O(1) : O(n)</td>
+      <td style="text-align: center">O(log n) : O(log n)</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center">（average: worst）</td>
+      <td style="text-align: center">（average : worst）</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>红黑树可以保证即便在最坏情况下依旧能够保持<code class="language-plaintext highlighter-rouge">O(logn)</code>的时间复杂度，其稳定性高于 Hash方式，并且它不存在哈希冲突，而为了保证<code class="language-plaintext highlighter-rouge">O(1)</code>的复杂度，一个好的哈希需要保证其负载，因此这会导致存在空间浪费，以及当负载大于负载因子（一般为3/4，2的幂移位操作）时，需要扩容，全部重新进行映射。但一般情况下，Hash的时间复杂度远优于红黑树。</p>
+
+<p>最后需要注意的是，红黑树作为二叉搜索树，它本身保证了元素的有序，python3.6+也通过两级映射实现了“有序”，不过指的是元素插入顺序而非大小顺序。</p>

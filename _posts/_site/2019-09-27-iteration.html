@@ -1,0 +1,125 @@
+<p>python容器（container）、可迭代对象（iterable）、迭代器（iterator）、生成器（generator）、列表/几何/字典推导式（list,set,dict comprehension）等概念值得细细理清。
+<img src="/img/iteration_1.png" alt="avator" />
+借鉴于<a href="https://nvie.com/posts/iterators-vs-generators/">Iterables vs. Iterators vs. Generators</a>、<a href="https://foofish.net/iterators-vs-generators.html"> 完全理解Python迭代对象、迭代器、生成器</a>和Stack Overflow  <a href="https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do">What does the “yield” keyword do?</a></p>
+
+<h2 id="容器">容器</h2>
+
+<p>容器技术源自于Docker项目，是一种沙盒技术，能够将应用“装”起来，使得应用之间存在边界而互不干扰。Python中，容器是一个抽象概念，是对用来装其他对象的数据类型的统称。python作为一门“<strong>鸭子类型</strong>”的语言：“<em>当看到一只鸟走起来像鸭子、游泳起来像鸭子、叫起来也是鸭子，那么这只鸟就可以被称作鸭子。</em>”因而确定对象是某个类型，根本上是指这个对象<strong>满足了该类型的的特定接口规范，可以被当做是这个类型来使用</strong>。从技术上而言，<strong>一个对象是不是容器关键在于它是否实现了<code class="language-plaintext highlighter-rouge">__contains__</code>方法，是否能够使用<code class="language-plaintext highlighter-rouge">in</code> 、<code class="language-plaintext highlighter-rouge">not in</code>关键字判断某元素是否在该对象中</strong>。从高层来看，各个容器类型实现的接口协议定义了容器，不同的容器类型是<code class="language-plaintext highlighter-rouge">是否可以迭代</code>、<code class="language-plaintext highlighter-rouge">是否可修改</code>、<code class="language-plaintext highlighter-rouge">是否有长度</code>等特性的不同组合，我们需要关注的是容器的抽象属性，而非容器类型本身。
+常见容器有：</p>
+
+<ul>
+  <li>list,deque(双向list，可用作queue,stack), ……</li>
+  <li>set,frozensets, …..</li>
+  <li>dict,defaultdict,OrderedDict,Counter, ……</li>
+  <li>tuple,namedtuple, ……</li>
+  <li>str</li>
+</ul>
+
+<p><em>注：绝大多数容器都提供方式来迭代获取每一个元素，但是这不是容器的能力，而是可迭代对象的能力，并非所有容器都是可迭代的。</em></p>
+
+<h2 id="可迭代对象">可迭代对象</h2>
+
+<p>可以返回一个迭代器的对象都称作可迭代对象，从编码上讲，<strong>只要实现了<code class="language-plaintext highlighter-rouge">__iter__</code>方法，就称作可迭代对象</strong>，因为该方法返回一个迭代器对象。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="nf">iter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="nf">iter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="nf">next</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="mi">1</span>
+<span class="nf">next</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="mi">2</span>
+<span class="nf">next</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<span class="mi">1</span>
+<span class="nf">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="k">class</span> <span class="err">'</span><span class="nc">list</span><span class="sh">'</span><span class="s">&gt;
+type(y)
+&lt;class </span><span class="sh">'</span><span class="n">list_iterator</span><span class="sh">'</span><span class="s">&gt;
+</span></code></pre></div></div>
+<p>代码中，<code class="language-plaintext highlighter-rouge">x</code>是一个可迭代对象，<code class="language-plaintext highlighter-rouge">y</code>和<code class="language-plaintext highlighter-rouge">z</code>是返回的两个独立的迭代器对象，在迭代器内部会持有一个状态来记录当前迭代所在的位置，不断使用<code class="language-plaintext highlighter-rouge">next()</code>方法就可以获取下一个元素。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">dis</span>  
+  
+<span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>  
+<span class="n">dis</span><span class="p">.</span><span class="nf">dis</span><span class="p">(</span><span class="sh">'</span><span class="s">for i in x: pass</span><span class="sh">'</span><span class="p">)</span>
+
+
+  <span class="mi">1</span>           <span class="mi">0</span> <span class="n">SETUP_LOOP</span>              <span class="mi">14</span> <span class="p">(</span><span class="n">to</span> <span class="mi">17</span><span class="p">)</span>
+              <span class="mi">3</span> <span class="n">LOAD_NAME</span>                <span class="mi">0</span> <span class="p">(</span><span class="n">x</span><span class="p">)</span>
+              <span class="mi">6</span> <span class="n">GET_ITER</span>
+        <span class="o">&gt;&gt;</span>    <span class="mi">7</span> <span class="n">FOR_ITER</span>                 <span class="mi">6</span> <span class="p">(</span><span class="n">to</span> <span class="mi">16</span><span class="p">)</span>
+             <span class="mi">10</span> <span class="n">STORE_NAME</span>               <span class="mi">1</span> <span class="p">(</span><span class="n">i</span><span class="p">)</span>
+             <span class="mi">13</span> <span class="n">JUMP_ABSOLUTE</span>            <span class="mi">7</span>
+        <span class="o">&gt;&gt;</span>   <span class="mi">16</span> <span class="n">POP_BLOCK</span>
+        <span class="o">&gt;&gt;</span>   <span class="mi">17</span> <span class="n">LOAD_CONST</span>               <span class="mi">0</span> <span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+             <span class="mi">20</span> <span class="n">RETURN_VALUE</span>
+</code></pre></div></div>
+<p>根据反编译结果，可以看出，对于<code class="language-plaintext highlighter-rouge">for</code>循环python解释器显示调用<code class="language-plaintext highlighter-rouge">GET_ITER</code>指令，相当于调用<code class="language-plaintext highlighter-rouge">iter(x)</code>，<code class="language-plaintext highlighter-rouge">FOR_ITER</code>指令就相当于调用了<code class="language-plaintext highlighter-rouge">next()</code>方法。<code class="language-plaintext highlighter-rouge">iter</code>方法可接收一个可迭代对象，然后返回一个迭代器，这也说明<code class="language-plaintext highlighter-rouge">list</code>、<code class="language-plaintext highlighter-rouge">dict</code>、<code class="language-plaintext highlighter-rouge">str</code>等是可迭代对象，但不是迭代器（迭代器是一个数据流）。</p>
+<h2 id="迭代器">迭代器</h2>
+
+<p>迭代器是一个实现了工厂模式的带状态的对象，每次在要下一个值时，返回下一个值。<strong>任何实现了<code class="language-plaintext highlighter-rouge">__iter__</code>和<code class="language-plaintext highlighter-rouge">next()</code>方法的对象都是迭代器</strong>（因此迭代器一定也是可迭代对象），<code class="language-plaintext highlighter-rouge">__iter__</code>返回迭代器本身，<code class="language-plaintext highlighter-rouge">next()</code>返回下一个值，若容器中没有更多元素，则抛出StopIteration异常。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Fib</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">prev</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">curr</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">self</span>
+
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">curr</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">curr</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="n">prev</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">prev</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="nc">Fib</span><span class="p">()</span>
+<span class="nf">list</span><span class="p">(</span><span class="nf">islice</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">55</span><span class="p">]</span>
+</code></pre></div></div>
+<p>Fib既是一个可迭代对象（实现了<code class="language-plaintext highlighter-rouge">__iter__</code>方法），又是一个迭代器（实现了<code class="language-plaintext highlighter-rouge">__iter__</code>和<code class="language-plaintext highlighter-rouge">__next__</code>方法），实例变量<code class="language-plaintext highlighter-rouge">prev</code>和<code class="language-plaintext highlighter-rouge">curr</code>维护迭代器内部的状态。迭代器就像一个lazy factory，不会一次性把所有值都加载到内存，有需要的时候才生成值然后返回，没调用时就处于休眠状态。</p>
+
+<h2 id="生成器">生成器</h2>
+
+<p><strong>生成器是一种特殊的迭代器，但只可以迭代它一次，不能重复迭代</strong>，因为它不将所有值都存储在内存中，而是实时生成值，因此它可以不受资源限制产生无限的值。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mygenerator</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">mygenerator</span><span class="p">:</span>
+    <span class="nf">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+<span class="mi">0</span>
+<span class="mi">1</span>
+<span class="mi">4</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">mygenerator</span><span class="p">:</span>  <span class="c1"># The generator has dried up
+</span>    <span class="nf">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+</code></pre></div></div>
+<p>这里的<code class="language-plaintext highlighter-rouge">mygenerator </code>就是一个生成器，不能对它再次迭代，期望还能产生<code class="language-plaintext highlighter-rouge">0、1、4</code>，因为生成器仅能使用一次，再次迭代什么都不会输出，它已经枯竭，若需要迭代值只能调用生成器函数或表达式再生成一个新的生成器。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">createGenerator</span><span class="p">():</span>  
+    <span class="n">mylist</span> <span class="o">=</span> <span class="nf">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="sh">'</span><span class="s">This is a generator!</span><span class="sh">'</span><span class="p">)</span>  
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">mylist</span><span class="p">:</span>  
+        <span class="k">yield</span> <span class="n">i</span> <span class="o">*</span> <span class="n">i</span>  
+  
+<span class="n">generator</span> <span class="o">=</span> <span class="nf">createGenerator</span><span class="p">()</span>  <span class="c1"># only return a generator,the function does not run  
+</span><span class="nf">print</span><span class="p">(</span><span class="sh">'</span><span class="s">The first!</span><span class="sh">'</span><span class="p">)</span>  
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">generator</span><span class="p">:</span>  
+    <span class="nf">print</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<span class="n">The</span> <span class="n">first</span><span class="err">!</span>
+<span class="n">This</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">generator</span><span class="err">!</span>
+<span class="mi">0</span>
+<span class="mi">1</span>
+<span class="mi">4</span>
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">yield</code>关键字类似于<code class="language-plaintext highlighter-rouge">return</code>，只是函数将会返回一个生成器。<strong><em>当函数被调用时，函数体中的代码不会被执行，仅仅返回一个生成器对象</em></strong>，函数的代码只会在显示或隐式调用<code class="language-plaintext highlighter-rouge">next()</code>时才会执行。当<code class="language-plaintext highlighter-rouge">for</code>第一次调用生成器对象时，代码从函数开始处运行直到遇到<code class="language-plaintext highlighter-rouge">yield</code>为止，然后返回一个值，直到没有值可以返回（函数运行后再也没有遇到<code class="language-plaintext highlighter-rouge">yield</code>，就认为生成器是空的），这既可能是循环结束，也可能是没有满足某一判定条件，导致函数不再遇到<code class="language-plaintext highlighter-rouge">yield</code>。</p>
+
+<h2 id="生成器表达式和推导式">生成器表达式和推导式</h2>
+
+<p>python中有生成器函数和生成器表达式两种产生生成器的方式。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">lazy_squares</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="nf">print</span><span class="p">(</span><span class="nf">next</span><span class="p">(</span><span class="n">lazy_squares</span><span class="p">))</span>
+
+<span class="mi">0</span>
+</code></pre></div></div>
+<p>这并不是一个元组推导式，而是产生一个生成器。</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+<span class="p">{</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)}</span>
+<span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)}</span>
+</code></pre></div></div>
+<p>也可以以这种优雅的推导式方式来得到list/set/dict。</p>
